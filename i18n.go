@@ -247,22 +247,48 @@ func (i18n *I18n) ConfigureQorResource(res resource.Resourcer) {
 			return ""
 		})
 
+		var getPrimaryLocale = func(context *admin.Context) string {
+			if locale := context.Request.Form.Get("primary_locale"); locale != "" {
+				return locale
+			}
+			if availableLocales := getAvailableLocales(context.Request, context.CurrentUser); len(availableLocales) > 0 {
+				return availableLocales[0]
+			}
+			return ""
+		}
+
+		var getEditingLocale = func(context *admin.Context) string {
+			if locale := context.Request.Form.Get("to_locale"); locale != "" {
+				return locale
+			}
+			return getLocaleFromContext(context.Context)
+		}
+
 		res.GetAdmin().RegisterFuncMap("i18n_available_keys", func(context *admin.Context) (keys []string) {
-			translations := i18n.Translations[Default]
-			if translations == nil {
-				for _, values := range i18n.Translations {
-					translations = values
-					break
+			var (
+				keysMap       = map[string]bool{}
+				keyword       = context.Request.URL.Query().Get("keyword")
+				primaryLocale = getPrimaryLocale(context)
+				editingLocale = getEditingLocale(context)
+			)
+
+			var filterTranslations = func(translations map[string]*Translation) {
+				if translations != nil {
+					for key, translation := range translations {
+						if (keyword == "") || (strings.Index(strings.ToLower(translation.Key), strings.ToLower(keyword)) != -1 ||
+							strings.Index(strings.ToLower(translation.Value), keyword) != -1) {
+							if _, ok := keysMap[key]; !ok {
+								keysMap[key] = true
+								keys = append(keys, key)
+							}
+						}
+					}
 				}
 			}
 
-			keyword := context.Request.URL.Query().Get("keyword")
-
-			for key, translation := range translations {
-				if (keyword == "") || (strings.Index(strings.ToLower(translation.Key), strings.ToLower(keyword)) != -1 ||
-					strings.Index(strings.ToLower(translation.Value), keyword) != -1) {
-					keys = append(keys, key)
-				}
+			filterTranslations(i18n.Translations[getPrimaryLocale(context)])
+			if primaryLocale != editingLocale {
+				filterTranslations(i18n.Translations[getEditingLocale(context)])
 			}
 
 			sort.Strings(keys)
@@ -291,22 +317,9 @@ func (i18n *I18n) ConfigureQorResource(res resource.Resourcer) {
 			return keys[(pagination.CurrentPage-1)*pagination.PrePage : lastIndex]
 		})
 
-		res.GetAdmin().RegisterFuncMap("i18n_primary_locale", func(context admin.Context) string {
-			if locale := context.Request.Form.Get("primary_locale"); locale != "" {
-				return locale
-			}
-			if availableLocales := getAvailableLocales(context.Request, context.CurrentUser); len(availableLocales) > 0 {
-				return availableLocales[0]
-			}
-			return ""
-		})
+		res.GetAdmin().RegisterFuncMap("i18n_primary_locale", getPrimaryLocale)
 
-		res.GetAdmin().RegisterFuncMap("i18n_editing_locale", func(context admin.Context) string {
-			if locale := context.Request.Form.Get("to_locale"); locale != "" {
-				return locale
-			}
-			return getLocaleFromContext(context.Context)
-		})
+		res.GetAdmin().RegisterFuncMap("i18n_editing_locale", getEditingLocale)
 
 		res.GetAdmin().RegisterFuncMap("i18n_viewable_locales", func(context admin.Context) []string {
 			return getAvailableLocales(context.Request, context.CurrentUser)
