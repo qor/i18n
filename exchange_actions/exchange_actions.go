@@ -7,9 +7,11 @@ import (
 	"path"
 	"path/filepath"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/qor/i18n"
+	"github.com/qor/media_library"
 	"github.com/qor/worker"
 )
 
@@ -75,7 +77,45 @@ func RegisterExchangeJobs(I18n *i18n.I18n, Worker *worker.Worker) {
 			writer.Flush()
 
 			qorJob.SetProgressText(fmt.Sprintf("<a href='%v'>Download exported translations</a>", filename))
-			return nil
+			return
+		},
+	})
+
+	// Import Translations
+	type importTranslationArgument struct {
+		Translations media_library.FileSystem
+	}
+
+	Worker.RegisterJob(worker.Job{
+		Name:     "Import Translations",
+		Group:    "Translations",
+		Resource: Worker.Admin.NewResource(&importTranslationArgument{}),
+		Handler: func(arg interface{}, qorJob worker.QorJobInterface) (err error) {
+			importTranslationArgument := arg.(*importTranslationArgument)
+			qorJob.AddLog("Importing translations...")
+			if csvfile, err := os.Open(path.Join("public", importTranslationArgument.Translations.URL())); err == nil {
+				reader := csv.NewReader(csvfile)
+				reader.TrimLeadingSpace = true
+				if records, err := reader.ReadAll(); err == nil {
+					if len(records) > 1 && len(records[0]) > 1 {
+						locales := records[0][1:]
+
+						for _, values := range records[1:] {
+							for idx, value := range values[1:] {
+								if strings.Contains(values[0], "Amount") {
+									I18n.SaveTranslation(&i18n.Translation{
+										Key:    values[0],
+										Locale: locales[idx],
+										Value:  value,
+									})
+								}
+							}
+						}
+					}
+				}
+				qorJob.AddLog("Imported translations")
+			}
+			return
 		},
 	})
 }
