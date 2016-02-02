@@ -28,6 +28,9 @@
   </div>
 
   <div class="qor-page__body i18n-body">
+    {{render "shared/flashes"}}
+    {{render "shared/errors"}}
+
     <ul class="i18n-list">
       {{range $key := i18n_available_keys .}}
       <li data-toggle="edit.qor.i18n" class="i18n-list-item">
@@ -71,6 +74,7 @@
       </li>
       {{end}}
     </ul>
+
     {{render "index/pagination"}}
   </div>
 </div>
