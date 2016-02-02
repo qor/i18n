@@ -78,15 +78,15 @@
         off(EVENT_CHANGE, this.change);
     },
 
-    makeInputEditable : function() {
+    makeInputEditable : function () {
       $.fn.editable.defaults.mode = 'popup';
-      $.fn.editable.defaults.ajaxOptions = {type: "POST"};
-      $(".qor-i18n-inline").editable({
+      $.fn.editable.defaults.ajaxOptions = { type: 'POST' };
+      $('.qor-i18n-inline').editable({
         pk: 1,
-        params: function(params) {
-          params["Value"] = params.value;
-          params["Locale"] = $(this).data("locale");
-          params["Key"] = $(this).data("key");
+        params: function (params) {
+          params.Value = params.value;
+          params.Locale = $(this).data('locale');
+          params.Key = $(this).data('key');
           return params;
         },
         url: '/admin/translations'

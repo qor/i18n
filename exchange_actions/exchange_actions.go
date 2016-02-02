@@ -7,14 +7,20 @@ import (
 	"path"
 	"path/filepath"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/qor/i18n"
 	"github.com/qor/media_library"
+	"github.com/qor/qor/admin"
 	"github.com/qor/worker"
 )
 
 func RegisterExchangeJobs(I18n *i18n.I18n, Worker *worker.Worker) {
+	for _, gopath := range strings.Split(os.Getenv("GOPATH"), ":") {
+		admin.RegisterViewPath(path.Join(gopath, "src/github.com/qor/i18n/exchange_actions/views"))
+	}
+
 	Worker.RegisterJob(worker.Job{
 		Name:  "Export Translations",
 		Group: "Translations",

@@ -1,6 +1,5 @@
 {{$primary_locale := (i18n_primary_locale .)}}
 {{$editing_locale := (i18n_editing_locale .)}}
-{{$actions := load_actions "index"}}
 
 <div class="qor-i18n">
   <div class="qor-page__header">
@@ -18,13 +17,14 @@
         {{end}}
       </select>
     </div>
+
     <div class="qor-actions">
       <button class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect qor-action--button qor-js-bulk" data-toggle="bulk.qor.i18n" type="button">{{t "Bulk Edit"}}</button>
       <button class="mdl-button mdl-button--accent mdl-js-button mdl-js-ripple-effect qor-action--button hidden" data-toggle="exit.qor.i18n" type="button">{{t "Exit Bulk Edit"}}</button>
       <!-- <button class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect qor-action--button hidden" data-toggle="copyall.qor.i18n" type="button">{{t "Copy All"}}</button> -->
     </div>
 
-    {{$actions}}
+    {{load_actions "index"}}
   </div>
 
   <div class="qor-page__body i18n-body">
