@@ -81,10 +81,17 @@ func (i18n *I18n) SaveTranslation(translation *Translation) error {
 	return errors.New("failed to save translation")
 }
 
-func (i18n *I18n) DeleteTranslation(translation *Translation) error {
-	err := translation.Backend.DeleteTranslation(translation)
-	if err == nil {
-		delete(i18n.Translations[translation.Locale], translation.Key)
+func (i18n *I18n) DeleteTranslation(translation *Translation) (err error) {
+	if translation.Backend == nil {
+		if ts := i18n.Translations[translation.Locale]; ts != nil && ts[translation.Key] != nil {
+			translation = ts[translation.Key]
+		}
+	}
+
+	if translation.Backend != nil {
+		if err = translation.Backend.DeleteTranslation(translation); err == nil {
+			delete(i18n.Translations[translation.Locale], translation.Key)
+		}
 	}
 	return err
 }
