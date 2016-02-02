@@ -23,7 +23,7 @@ func RegisterExchangeJobs(I18n *i18n.I18n, Worker *worker.Worker) {
 
 	Worker.RegisterJob(worker.Job{
 		Name:  "Export Translations",
-		Group: "Translations",
+		Group: "Export/Import Translations From CSV file",
 		Handler: func(arg interface{}, qorJob worker.QorJobInterface) (err error) {
 			var (
 				locales         []string
@@ -88,17 +88,17 @@ func RegisterExchangeJobs(I18n *i18n.I18n, Worker *worker.Worker) {
 
 	// Import Translations
 	type importTranslationArgument struct {
-		Translations media_library.FileSystem
+		TranslationsFile media_library.FileSystem
 	}
 
 	Worker.RegisterJob(worker.Job{
 		Name:     "Import Translations",
-		Group:    "Translations",
+		Group:    "Export/Import Translations From CSV file",
 		Resource: Worker.Admin.NewResource(&importTranslationArgument{}),
 		Handler: func(arg interface{}, qorJob worker.QorJobInterface) (err error) {
 			importTranslationArgument := arg.(*importTranslationArgument)
 			qorJob.AddLog("Importing translations...")
-			if csvfile, err := os.Open(path.Join("public", importTranslationArgument.Translations.URL())); err == nil {
+			if csvfile, err := os.Open(path.Join("public", importTranslationArgument.TranslationsFile.URL())); err == nil {
 				reader := csv.NewReader(csvfile)
 				reader.TrimLeadingSpace = true
 				if records, err := reader.ReadAll(); err == nil {
