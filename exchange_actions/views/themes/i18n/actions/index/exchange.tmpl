@@ -3,12 +3,12 @@
   {{$prefix := .Admin.GetRouter.Prefix}}
 
   {{$importTranslationURL := (printf "%v/%v/new?job=Import Translations" $prefix $worker.ToParam)}}
-  <button class="mdl-button mdl-js-button mdl-button--icon mdl-button--colored" data-url="{{$importTranslationURL}}" type="button" title="{{dt "qor_i18n.actions.import_translations" "Import Translations"}}">
+  <button class="mdl-button mdl-js-button mdl-button--icon mdl-button--colored" data-url="{{$importTranslationURL}}" type="button" title="{{t "qor_i18n.actions.import_translations" "Import Translations"}}">
     <img src="{{$prefix}}/assets/images/i18n/import-translations.svg"/>
   </button>
 
   {{$exportTranslationURL := (printf "%v/%v/new?job=Export Translations" $prefix $worker.ToParam)}}
-  <button class="mdl-button mdl-js-button mdl-button--icon mdl-button--colored" data-url="{{$exportTranslationURL}}" type="button" title="{{dt "qor_i18n.actions.export_translations" "Export Translations"}}">
+  <button class="mdl-button mdl-js-button mdl-button--icon mdl-button--colored" data-url="{{$exportTranslationURL}}" type="button" title="{{t "qor_i18n.actions.export_translations" "Export Translations"}}">
     <img src="{{$prefix}}/assets/images/i18n/export-translations.svg"/>
   </button>
 </div>
