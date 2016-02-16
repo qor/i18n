@@ -321,7 +321,11 @@ func (i18n *I18n) ConfigureQorResource(res resource.Resourcer) {
 				lastIndex = pagination.Total
 			}
 
-			return keys[(pagination.CurrentPage-1)*pagination.PrePage : lastIndex]
+			startIndex := (pagination.CurrentPage - 1) * pagination.PrePage
+			if lastIndex >= startIndex {
+				return keys[startIndex:lastIndex]
+			}
+			return []string{}
 		})
 
 		res.GetAdmin().RegisterFuncMap("i18n_primary_locale", getPrimaryLocale)
