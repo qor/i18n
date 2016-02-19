@@ -346,8 +346,6 @@ func (i18n *I18n) ConfigureQorResource(res resource.Resourcer) {
 		router.Post(res.ToParam(), controller.Update)
 		router.Put(res.ToParam(), controller.Update)
 
-		for _, gopath := range strings.Split(os.Getenv("GOPATH"), ":") {
-			admin.RegisterViewPath(path.Join(gopath, "src/github.com/qor/i18n/views"))
-		}
+		admin.RegisterViewPath("github.com/qor/i18n/views")
 	}
 }
