@@ -18,7 +18,7 @@ import (
 func RegisterExchangeJobs(I18n *i18n.I18n, Worker *worker.Worker) {
 	admin.RegisterViewPath("github.com/qor/i18n/exchange_actions/views")
 
-	Worker.RegisterJob(worker.Job{
+	Worker.RegisterJob(&worker.Job{
 		Name:  "Export Translations",
 		Group: "Export/Import Translations From CSV file",
 		Handler: func(arg interface{}, qorJob worker.QorJobInterface) (err error) {
@@ -88,7 +88,7 @@ func RegisterExchangeJobs(I18n *i18n.I18n, Worker *worker.Worker) {
 		TranslationsFile media_library.FileSystem
 	}
 
-	Worker.RegisterJob(worker.Job{
+	Worker.RegisterJob(&worker.Job{
 		Name:     "Import Translations",
 		Group:    "Export/Import Translations From CSV file",
 		Resource: Worker.Admin.NewResource(&importTranslationArgument{}),
