@@ -19,26 +19,31 @@ import (
 	"github.com/theplant/cldr"
 )
 
+// Default default locale for i18n
 var Default = "en-US"
 
+// I18n struct that hold all translations
 type I18n struct {
 	scope        string
 	value        string
+	isInlineEdit bool
 	Backends     []Backend
 	Translations map[string]map[string]*Translation
-	IsInlineEdit bool
 }
 
+// ResourceName change display name in qor admin
 func (I18n) ResourceName() string {
 	return "Translation"
 }
 
+// Backend defined methods that needs for translation backend
 type Backend interface {
 	LoadTranslations() []*Translation
 	SaveTranslation(*Translation) error
 	DeleteTranslation(*Translation) error
 }
 
+// Translation is a struct for translations, including Translation Key, Locale, Value
 type Translation struct {
 	Key     string
 	Locale  string
@@ -46,6 +51,7 @@ type Translation struct {
 	Backend Backend
 }
 
+// New initialize I18n with backends
 func New(backends ...Backend) *I18n {
 	i18n := &I18n{Backends: backends, Translations: map[string]map[string]*Translation{}}
 	for i := len(backends) - 1; i >= 0; i-- {
@@ -58,6 +64,7 @@ func New(backends ...Backend) *I18n {
 	return i18n
 }
 
+// AddTranslation add translation
 func (i18n *I18n) AddTranslation(translation *Translation) {
 	if i18n.Translations[translation.Locale] == nil {
 		i18n.Translations[translation.Locale] = map[string]*Translation{}
@@ -65,6 +72,7 @@ func (i18n *I18n) AddTranslation(translation *Translation) {
 	i18n.Translations[translation.Locale][translation.Key] = translation
 }
 
+// SaveTranslation save translation
 func (i18n *I18n) SaveTranslation(translation *Translation) error {
 	var backends []Backend
 	if backend := translation.Backend; backend != nil {
@@ -81,6 +89,7 @@ func (i18n *I18n) SaveTranslation(translation *Translation) error {
 	return errors.New("failed to save translation")
 }
 
+// DeleteTranslation delete translation
 func (i18n *I18n) DeleteTranslation(translation *Translation) (err error) {
 	if translation.Backend == nil {
 		if ts := i18n.Translations[translation.Locale]; ts != nil && ts[translation.Key] != nil {
@@ -96,18 +105,22 @@ func (i18n *I18n) DeleteTranslation(translation *Translation) (err error) {
 	return err
 }
 
+// EnableInlineEdit enable inline edit, return HTML used to edit the translation
 func (i18n *I18n) EnableInlineEdit(isInlineEdit bool) admin.I18n {
-	return &I18n{Translations: i18n.Translations, scope: i18n.scope, value: i18n.value, Backends: i18n.Backends, IsInlineEdit: isInlineEdit}
+	return &I18n{Translations: i18n.Translations, scope: i18n.scope, value: i18n.value, Backends: i18n.Backends, isInlineEdit: isInlineEdit}
 }
 
+// Scope i18n scope
 func (i18n *I18n) Scope(scope string) admin.I18n {
-	return &I18n{Translations: i18n.Translations, scope: scope, value: i18n.value, Backends: i18n.Backends, IsInlineEdit: i18n.IsInlineEdit}
+	return &I18n{Translations: i18n.Translations, scope: scope, value: i18n.value, Backends: i18n.Backends, isInlineEdit: i18n.isInlineEdit}
 }
 
+// Default default value of translation if key is missing
 func (i18n *I18n) Default(value string) admin.I18n {
-	return &I18n{Translations: i18n.Translations, scope: i18n.scope, value: value, Backends: i18n.Backends, IsInlineEdit: i18n.IsInlineEdit}
+	return &I18n{Translations: i18n.Translations, scope: i18n.scope, value: value, Backends: i18n.Backends, isInlineEdit: i18n.isInlineEdit}
 }
 
+// T translate with locale, key and arguments
 func (i18n *I18n) T(locale, key string, args ...interface{}) template.HTML {
 	var value = i18n.value
 	var translationKey = key
@@ -137,7 +150,7 @@ func (i18n *I18n) T(locale, key string, args ...interface{}) template.HTML {
 		value = str
 	}
 
-	if i18n.IsInlineEdit {
+	if i18n.isInlineEdit {
 		var editType string
 		if len(value) > 25 {
 			editType = "data-type=\"textarea\""
@@ -148,7 +161,7 @@ func (i18n *I18n) T(locale, key string, args ...interface{}) template.HTML {
 	return template.HTML(value)
 }
 
-// Using: http://vitalets.github.io/x-editable/index.html
+// RenderInlineEditAssets render inline edit html, it is using: http://vitalets.github.io/x-editable/index.html
 // You could use Bootstrap or JQuery UI by set isIncludeExtendAssetLib to false and load files by yourself
 func RenderInlineEditAssets(isIncludeJQuery bool, isIncludeExtendAssetLib bool) (template.HTML, error) {
 	for _, gopath := range strings.Split(os.Getenv("GOPATH"), ":") {
@@ -230,6 +243,7 @@ func getEditableLocales(req *http.Request, currentUser qor.CurrentUser) []string
 	return []string{Default}
 }
 
+// ConfigureQorResource configure qor resource for qor admin
 func (i18n *I18n) ConfigureQorResource(res resource.Resourcer) {
 	if res, ok := res.(*admin.Resource); ok {
 		res.UseTheme("i18n")

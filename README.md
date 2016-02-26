@@ -2,6 +2,8 @@
 
 I18n provides internationalization support for your application, it supports different backends, by default, provides database, YAML backends
 
+[![GoDoc](https://godoc.org/github.com/qor/i18n?status.svg)](https://godoc.org/github.com/qor/i18n)
+
 ## Usage
 
 ```go
@@ -15,7 +17,10 @@ func main() {
   db, err := gorm.Open("mysql", "user:password@/dbname?charset=utf8&parseTime=True&loc=Local")
 
   // Using two backends, earlier backend has higher priority
-  I18n = i18n.New(database.New(&db), yaml.New(filepath.Join(config.Root, "config/locales")))
+  I18n = i18n.New(
+    database.New(&db), // load translations from database
+    yaml.New(filepath.Join(config.Root, "config/locales")),  // load translations from YAML files in directory `config/locales
+  )
 
   // Add Translation
   I18n.AddTranslation(&i18n.Translation{Key: "hello-world", Locale: "en-US", Value: "hello world"})
