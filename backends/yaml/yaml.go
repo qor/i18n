@@ -14,6 +14,7 @@ import (
 	"github.com/qor/i18n"
 )
 
+// New new YAML backend for I18n
 func New(paths ...string) i18n.Backend {
 	backend := &Backend{}
 
@@ -37,6 +38,7 @@ func New(paths ...string) i18n.Backend {
 	return backend
 }
 
+// Backend YAML backend
 type Backend struct {
 	files []string
 }
@@ -59,6 +61,7 @@ func loadTranslationsFromYaml(locale string, value interface{}, scopes []string)
 	return
 }
 
+// LoadTranslations load translations from YAML backend
 func (backend *Backend) LoadTranslations() (translations []*i18n.Translation) {
 	for _, file := range backend.files {
 		if content, err := ioutil.ReadFile(file); err == nil {
@@ -73,10 +76,12 @@ func (backend *Backend) LoadTranslations() (translations []*i18n.Translation) {
 	return translations
 }
 
+// SaveTranslation save translation into YAML backend, not implemented
 func (backend *Backend) SaveTranslation(t *i18n.Translation) error {
 	return errors.New("not implemented")
 }
 
+// DeleteTranslation delete translation into YAML backend, not implemented
 func (backend *Backend) DeleteTranslation(t *i18n.Translation) error {
 	return errors.New("not implemented")
 }

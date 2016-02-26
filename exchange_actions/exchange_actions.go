@@ -15,6 +15,7 @@ import (
 	"github.com/qor/worker"
 )
 
+// RegisterExchangeJobs register i18n jobs into worker
 func RegisterExchangeJobs(I18n *i18n.I18n, Worker *worker.Worker) {
 	admin.RegisterViewPath("github.com/qor/i18n/exchange_actions/views")
 
@@ -32,7 +33,7 @@ func RegisterExchangeJobs(I18n *i18n.I18n, Worker *worker.Worker) {
 			qorJob.AddLog("Exporting translations...")
 
 			// Sort locales
-			for locale, _ := range I18n.Translations {
+			for locale := range I18n.Translations {
 				locales = append(locales, locale)
 			}
 			sort.Strings(locales)
@@ -54,7 +55,7 @@ func RegisterExchangeJobs(I18n *i18n.I18n, Worker *worker.Worker) {
 
 			// Sort translation keys
 			for _, locale := range locales {
-				for key, _ := range I18n.Translations[locale] {
+				for key := range I18n.Translations[locale] {
 					translationsMap[key] = true
 				}
 			}
