@@ -11,12 +11,12 @@ func TestLoadTranslations(t *testing.T) {
 	translations := backend.LoadTranslations()
 
 	values := map[string][][]string{
-		"en": [][]string{
+		"en": {
 			{"hello", "Hello"},
 			{"user.name", "User Name"},
 			{"user.email", "Email"},
 		},
-		"zh-CN": [][]string{
+		"zh-CN": {
 			{"hello", "你好"},
 			{"user.name", "用户名"},
 			{"user.email", "邮箱"},
