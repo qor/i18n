@@ -96,6 +96,12 @@ func T(key string, value string, args ...interface{}) string {
 
 I18n could be used alone, and it works nicely with QOR, if you have requirements to manage your application's data, be sure to check QOR out!
 
+To use I18n with Qor, just need to add it as resource to the admin
+
+```go
+ Admin.AddResource(I18n)
+ ```
+
 [QOR Demo:  http://demo.getqor.com/admin](http://demo.getqor.com/admin)
 
 [I18n Demo with QOR](http://demo.getqor.com/admin/translations)
