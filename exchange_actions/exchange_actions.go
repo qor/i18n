@@ -11,7 +11,7 @@ import (
 
 	"github.com/qor/i18n"
 	"github.com/qor/media_library"
-	"github.com/qor/qor/admin"
+	"github.com/qor/admin"
 	"github.com/qor/worker"
 )
 

@@ -1,6 +1,6 @@
 package i18n
 
-import "github.com/qor/qor/admin"
+import "github.com/qor/admin"
 
 type i18nController struct {
 	*I18n

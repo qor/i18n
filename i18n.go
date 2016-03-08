@@ -13,7 +13,7 @@ import (
 	"strings"
 
 	"github.com/qor/qor"
-	"github.com/qor/qor/admin"
+	"github.com/qor/admin"
 	"github.com/qor/qor/resource"
 	"github.com/qor/qor/utils"
 	"github.com/theplant/cldr"
