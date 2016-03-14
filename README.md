@@ -1,6 +1,6 @@
 # I18n
 
-I18n provides internationalization support for your application, it supports different backends, by default, provides database, YAML backends
+I18n provides internationalization support for your application, it supports different storage solutions (*backends*) including a SQL database and YAML.
 
 [![GoDoc](https://godoc.org/github.com/qor/i18n?status.svg)](https://godoc.org/github.com/qor/i18n)
 
@@ -31,20 +31,20 @@ func main() {
   // Delete Translation
   I18n.DeleteTranslation(&i18n.Translation{Key: "hello-world", Locale: "en-US", Value: "Hello World"})
 
-  // Read transation with key `hello-world`
+  // Read Translation with key `hello-world`
   I18n.T("en-US", "hello-world")
 
-  // Read transation with `Scope`
+  // Read Translation with `Scope`
   I18n.Scope("home-page").T("zh-CN", "hello-world") // read translation with translation key `home-page.hello-world`
 
-  // Read transation with `Default Value`
+  // Read Translation with `Default Value`
   I18n.Default("Default Value").T("zh-CN", "non-existing-key") // Will return default value `Default Value`
 }
 ```
 
 ### Interpolation
 
-I18n using golang template to parse translations with interpolation variable
+I18n utilises Golang template to parse translations with interpolation variable.
 
 ```go
 I18n.AddTranslation(&i18n.Translation{Key: "hello", Locale: "en-US", Value: "Hello {{.Name}}"})
@@ -56,7 +56,7 @@ I18n.T("en-US", "hello", User{Name: "jinzhu"}) //=> Hello jinzhu
 
 ### Pluralization
 
-I18n is using [cldr](https://github.com/theplant/cldr) to do the job, it provide functions `p`, `zero`, `one`, `two`, `few`, `many`, `other` for pluralization, refer it for more details
+I18n utilises [cldr](https://github.com/theplant/cldr) to achieve pluralization, it provides the functions `p`, `zero`, `one`, `two`, `few`, `many`, `other` for this purpose. Refer to cldr documentation for more information.
 
 ```go
 I18n.AddTranslation(&i18n.Translation{Key: "count", Locale: "en-US", Value: "{{p "Count" (one "{{.Count}} item") (other "{{.Count}} items")}}"})
@@ -72,7 +72,7 @@ I18n.T("en-US", "ordered_params", "string1", "string2") //=> string1 string2 str
 
 ### Golang Templates
 
-You could define a `T` method and register it as FuncMap
+You could define a `T` method and register it as FuncMap:
 
 ```go
 
@@ -92,11 +92,11 @@ func T(key string, value string, args ...interface{}) string {
 
 ## [Qor Support](https://github.com/qor/qor)
 
-[QOR](http://getqor.com) is architected from the ground up to accelerate development and deployment of Content Management Systems, E-commerce Systems, and Business Applications, and comprised of modules that abstract common features for such system.
+[QOR](http://getqor.com) is architected from the ground up to accelerate development and deployment of Content Management Systems, E-commerce Systems, and Business Applications and as such is comprised of modules that abstract common features for such systems.
 
-I18n could be used alone, and it works nicely with QOR, if you have requirements to manage your application's data, be sure to check QOR out!
+Although I18n can be used standalone, it works very nicely with QOR - if you have requirements to manage your application's data, be sure to check QOR out!
 
-To use I18n with Qor, just need to add it as resource to the admin
+To use I18n with Qor, simply add it as resource to the admin:
 
 ```go
  Admin.AddResource(I18n)
