@@ -1,6 +1,11 @@
 package i18n
 
-import "github.com/qor/admin"
+import (
+	"github.com/microcosm-cc/bluemonday"
+	"github.com/qor/admin"
+)
+
+var htmlSanitizer = bluemonday.UGCPolicy()
 
 type i18nController struct {
 	*I18n
@@ -12,7 +17,7 @@ func (controller *i18nController) Index(context *admin.Context) {
 
 func (controller *i18nController) Update(context *admin.Context) {
 	form := context.Request.Form
-	translation := Translation{Key: form.Get("Key"), Locale: form.Get("Locale"), Value: form.Get("Value")}
+	translation := Translation{Key: form.Get("Key"), Locale: form.Get("Locale"), Value: htmlSanitizer.Sanitize(form.Get("Value"))}
 
 	if results := controller.I18n.Translations[translation.Locale]; results != nil {
 		if result := results[translation.Key]; result != nil {
