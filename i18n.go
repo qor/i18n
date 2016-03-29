@@ -12,8 +12,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/qor/qor"
 	"github.com/qor/admin"
+	"github.com/qor/qor"
 	"github.com/qor/qor/resource"
 	"github.com/qor/qor/utils"
 	"github.com/theplant/cldr"
@@ -288,7 +288,7 @@ func (i18n *I18n) ConfigureQorResource(res resource.Resourcer) {
 		res.GetAdmin().RegisterFuncMap("i18n_available_keys", func(context *admin.Context) (keys []string) {
 			var (
 				keysMap       = map[string]bool{}
-				keyword       = context.Request.URL.Query().Get("keyword")
+				keyword       = strings.ToLower(context.Request.URL.Query().Get("keyword"))
 				primaryLocale = getPrimaryLocale(context)
 				editingLocale = getEditingLocale(context)
 			)
@@ -296,7 +296,7 @@ func (i18n *I18n) ConfigureQorResource(res resource.Resourcer) {
 			var filterTranslations = func(translations map[string]*Translation) {
 				if translations != nil {
 					for key, translation := range translations {
-						if (keyword == "") || (strings.Index(strings.ToLower(translation.Key), strings.ToLower(keyword)) != -1 ||
+						if (keyword == "") || (strings.Index(strings.ToLower(translation.Key), keyword) != -1 ||
 							strings.Index(strings.ToLower(translation.Value), keyword) != -1) {
 							if _, ok := keysMap[key]; !ok {
 								keysMap[key] = true
