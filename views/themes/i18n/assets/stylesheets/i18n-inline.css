@@ -37,6 +37,7 @@
   width: 300px; }
 
 .editable-submit {
+  margin-top: 5px;
   cursor: pointer;
   text-transform: uppercase;
   min-width: 50px;

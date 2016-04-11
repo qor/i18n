@@ -12,8 +12,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/qor/qor"
 	"github.com/qor/admin"
+	"github.com/qor/qor"
 	"github.com/qor/qor/resource"
 	"github.com/qor/qor/utils"
 	"github.com/theplant/cldr"
@@ -24,6 +24,7 @@ var Default = "en-US"
 
 // I18n struct that hold all translations
 type I18n struct {
+	Resource     *admin.Resource
 	scope        string
 	value        string
 	isInlineEdit bool
@@ -107,17 +108,17 @@ func (i18n *I18n) DeleteTranslation(translation *Translation) (err error) {
 
 // EnableInlineEdit enable inline edit, return HTML used to edit the translation
 func (i18n *I18n) EnableInlineEdit(isInlineEdit bool) admin.I18n {
-	return &I18n{Translations: i18n.Translations, scope: i18n.scope, value: i18n.value, Backends: i18n.Backends, isInlineEdit: isInlineEdit}
+	return &I18n{Translations: i18n.Translations, scope: i18n.scope, value: i18n.value, Backends: i18n.Backends, isInlineEdit: isInlineEdit, Resource: i18n.Resource}
 }
 
 // Scope i18n scope
 func (i18n *I18n) Scope(scope string) admin.I18n {
-	return &I18n{Translations: i18n.Translations, scope: scope, value: i18n.value, Backends: i18n.Backends, isInlineEdit: i18n.isInlineEdit}
+	return &I18n{Translations: i18n.Translations, scope: scope, value: i18n.value, Backends: i18n.Backends, isInlineEdit: i18n.isInlineEdit, Resource: i18n.Resource}
 }
 
 // Default default value of translation if key is missing
 func (i18n *I18n) Default(value string) admin.I18n {
-	return &I18n{Translations: i18n.Translations, scope: i18n.scope, value: value, Backends: i18n.Backends, isInlineEdit: i18n.isInlineEdit}
+	return &I18n{Translations: i18n.Translations, scope: i18n.scope, value: value, Backends: i18n.Backends, isInlineEdit: i18n.isInlineEdit, Resource: i18n.Resource}
 }
 
 // T translate with locale, key and arguments
@@ -155,7 +156,8 @@ func (i18n *I18n) T(locale, key string, args ...interface{}) template.HTML {
 		if len(value) > 25 {
 			editType = "data-type=\"textarea\""
 		}
-		value = fmt.Sprintf("<span class=\"qor-i18n-inline\" %s data-locale=\"%s\" data-key=\"%s\">%s</span>", editType, locale, key, value)
+		assets_tag := fmt.Sprintf("<script data-prefix=\"%v\" src=\"/admin/assets/javascripts/i18n-checker.js?theme=i18n\"></script>", i18n.Resource.GetAdmin().GetRouter().Prefix)
+		value = fmt.Sprintf("%s<span class=\"qor-i18n-inline\" %s data-locale=\"%s\" data-key=\"%s\">%s</span>", assets_tag, editType, locale, key, value)
 	}
 
 	return template.HTML(value)
@@ -246,6 +248,7 @@ func getEditableLocales(req *http.Request, currentUser qor.CurrentUser) []string
 // ConfigureQorResource configure qor resource for qor admin
 func (i18n *I18n) ConfigureQorResource(res resource.Resourcer) {
 	if res, ok := res.(*admin.Resource); ok {
+		i18n.Resource = res
 		res.UseTheme("i18n")
 		res.GetAdmin().I18n = i18n
 		res.SearchAttrs("value") // generate search handler for i18n
