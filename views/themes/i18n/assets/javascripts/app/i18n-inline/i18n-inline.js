@@ -9,7 +9,7 @@
     // Browser globals.
     factory(jQuery);
   }
-})(function ($) {
+})(function (jQuery) {
 
   'use strict';
 
@@ -23,8 +23,8 @@
   var EVENT_INPUT = 'input';
 
   function I18nInlineEdit(element, options) {
-    this.$element = $(element);
-    this.options = $.extend({}, I18nInlineEdit.DEFAULTS, $.isPlainObject(options) && options);
+    this.jQueryelement = jQuery(element);
+    this.options = jQuery.extend({}, I18nInlineEdit.DEFAULTS, jQuery.isPlainObject(options) && options);
     this.multiple = false;
     this.init();
   }
@@ -32,8 +32,8 @@
   function encodeSearch(data) {
     var params = [];
 
-    if ($.isPlainObject(data)) {
-      $.each(data, function (name, value) {
+    if (jQuery.isPlainObject(data)) {
+      jQuery.each(data, function (name, value) {
         params.push([name, value].join('='));
       });
     }
@@ -47,7 +47,7 @@
     if (search) {
       search = search.replace('?', '').split('&');
 
-      $.each(search, function (i, param) {
+      jQuery.each(search, function (i, param) {
         param = param.split('=');
         i = param[0];
         data[i] = param[1];
@@ -61,32 +61,32 @@
     contructor: I18nInlineEdit,
 
     init: function () {
-      var $this = this.$element;
+      var jQuerythis = this.jQueryelement;
       this.makeInputEditable();
       this.bind();
     },
 
     bind: function () {
-      this.$element.
-        on(EVENT_CLICK, $.proxy(this.click, this)).
-        on(EVENT_CHANGE, $.proxy(this.change, this));
+      this.jQueryelement.
+        on(EVENT_CLICK, jQuery.proxy(this.click, this)).
+        on(EVENT_CHANGE, jQuery.proxy(this.change, this));
     },
 
     unbind: function () {
-      this.$element.
+      this.jQueryelement.
         off(EVENT_CLICK, this.click).
         off(EVENT_CHANGE, this.change);
     },
 
     makeInputEditable : function () {
-      $.fn.editable.defaults.mode = 'popup';
-      $.fn.editable.defaults.ajaxOptions = { type: 'POST' };
-      $('.qor-i18n-inline').editable({
+      jQuery.fn.editable.defaults.mode = 'popup';
+      jQuery.fn.editable.defaults.ajaxOptions = { type: 'POST' };
+      jQuery('.qor-i18n-inline').editable({
         pk: 1,
         params: function (params) {
           params.Value = params.value;
-          params.Locale = $(this).data('locale');
-          params.Key = $(this).data('key');
+          params.Locale = jQuery(this).data('locale');
+          params.Key = jQuery(this).data('key');
           return params;
         },
         url: '/admin/translations'
@@ -98,22 +98,22 @@
 
   I18nInlineEdit.plugin = function (options) {
     return this.each(function () {
-      var $this = $(this);
-      var data = $this.data(NAMESPACE);
+      var jQuerythis = jQuery(this);
+      var data = jQuerythis.data(NAMESPACE);
       var fn;
 
       if (!data) {
-        $this.data(NAMESPACE, (data = new I18nInlineEdit(this, options)));
+        jQuerythis.data(NAMESPACE, (data = new I18nInlineEdit(this, options)));
       }
 
-      if (typeof options === 'string' && $.isFunction((fn = data[options]))) {
+      if (typeof options === 'string' && jQuery.isFunction((fn = data[options]))) {
         fn.apply(data);
       }
     });
   };
 
-  $(function () {
-    I18nInlineEdit.plugin.call($('.qor-i18n-inline'));
+  jQuery(document).ready(function () {
+    I18nInlineEdit.plugin.call(jQuery('.qor-i18n-inline'));
   });
 
 });
