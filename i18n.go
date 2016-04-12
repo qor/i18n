@@ -11,6 +11,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/qor/admin"
 	"github.com/qor/qor"
@@ -29,6 +30,8 @@ type I18n struct {
 	isInlineEdit bool
 	Backends     []Backend
 	Translations map[string]map[string]*Translation
+
+	mutex sync.RWMutex
 }
 
 // ResourceName change display name in qor admin
@@ -66,6 +69,8 @@ func New(backends ...Backend) *I18n {
 
 // AddTranslation add translation
 func (i18n *I18n) AddTranslation(translation *Translation) {
+	i18n.mutex.Lock()
+	defer i18n.mutex.Unlock()
 	if i18n.Translations[translation.Locale] == nil {
 		i18n.Translations[translation.Locale] = map[string]*Translation{}
 	}
@@ -92,14 +97,18 @@ func (i18n *I18n) SaveTranslation(translation *Translation) error {
 // DeleteTranslation delete translation
 func (i18n *I18n) DeleteTranslation(translation *Translation) (err error) {
 	if translation.Backend == nil {
+		i18n.mutex.RLock()
 		if ts := i18n.Translations[translation.Locale]; ts != nil && ts[translation.Key] != nil {
 			translation = ts[translation.Key]
 		}
+		i18n.mutex.RUnlock()
 	}
 
 	if translation.Backend != nil {
 		if err = translation.Backend.DeleteTranslation(translation); err == nil {
+			i18n.mutex.Lock()
 			delete(i18n.Translations[translation.Locale], translation.Key)
+			i18n.mutex.Unlock()
 		}
 	}
 	return err
@@ -128,13 +137,17 @@ func (i18n *I18n) T(locale, key string, args ...interface{}) template.HTML {
 		translationKey = strings.Join([]string{i18n.scope, key}, ".")
 	}
 
+	i18n.mutex.RLock()
 	if translations := i18n.Translations[locale]; translations != nil && translations[translationKey] != nil && translations[translationKey].Value != "" {
 		// Get localized translation
 		value = translations[translationKey].Value
+		i18n.mutex.RUnlock()
 	} else if translations := i18n.Translations[Default]; translations != nil && translations[translationKey] != nil {
 		// Get default translation if not translated
 		value = translations[translationKey].Value
+		i18n.mutex.RUnlock()
 	} else {
+		i18n.mutex.RUnlock()
 		if value == "" {
 			value = key
 		}
@@ -251,6 +264,9 @@ func (i18n *I18n) ConfigureQorResource(res resource.Resourcer) {
 		res.SearchAttrs("value") // generate search handler for i18n
 
 		res.GetAdmin().RegisterFuncMap("lt", func(locale, key string, withDefault bool) string {
+			i18n.mutex.RLock()
+			defer i18n.mutex.RUnlock()
+
 			if translations := i18n.Translations[locale]; translations != nil {
 				if t := translations[key]; t != nil && t.Value != "" {
 					return t.Value
@@ -307,10 +323,12 @@ func (i18n *I18n) ConfigureQorResource(res resource.Resourcer) {
 				}
 			}
 
+			i18n.mutex.RLock()
 			filterTranslations(i18n.Translations[getPrimaryLocale(context)])
 			if primaryLocale != editingLocale {
 				filterTranslations(i18n.Translations[getEditingLocale(context)])
 			}
+			i18n.mutex.RUnlock()
 
 			sort.Strings(keys)
 

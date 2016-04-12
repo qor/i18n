@@ -19,11 +19,13 @@ func (controller *i18nController) Update(context *admin.Context) {
 	form := context.Request.Form
 	translation := Translation{Key: form.Get("Key"), Locale: form.Get("Locale"), Value: htmlSanitizer.Sanitize(form.Get("Value"))}
 
+	controller.I18n.mutex.RLock()
 	if results := controller.I18n.Translations[translation.Locale]; results != nil {
 		if result := results[translation.Key]; result != nil {
 			translation.Backend = result.Backend
 		}
 	}
+	controller.I18n.mutex.RUnlock()
 
 	if err := controller.I18n.SaveTranslation(&translation); err == nil {
 		context.Writer.Write([]byte("OK"))
