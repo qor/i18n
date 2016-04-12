@@ -81,7 +81,7 @@
     makeInputEditable : function () {
       jQuery.fn.editable.defaults.mode = 'popup';
       jQuery.fn.editable.defaults.ajaxOptions = { type: 'POST' };
-      jQuery('.qor-i18n-inline').editable({
+      this.jQueryelement.editable({
         pk: 1,
         params: function (params) {
           params.Value = params.value;
@@ -90,6 +90,9 @@
           return params;
         },
         url: '/admin/translations'
+      });
+      this.jQueryelement.on("hidden", function(e, params) {
+        $(this).html($(this).text());
       });
     }
   };

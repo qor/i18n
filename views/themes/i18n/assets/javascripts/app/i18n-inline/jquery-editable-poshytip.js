@@ -1490,7 +1490,9 @@ Makes editable any HTML element on the page. Applied as jQuery method.
 
             //set value from settings or by element's text
             if (this.options.value === undefined || this.options.value === null) {
-                this.value = this.input.html2value($.trim(this.$element.html()));
+                // HACK by bin
+                //this.value = this.input.html2value($.trim(this.$element.html()));
+                this.value = $.trim(this.$element.html());
                 isValueByText = true;
             } else {
                 /*
