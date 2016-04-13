@@ -31,7 +31,7 @@ type I18n struct {
 	Backends     []Backend
 	Translations map[string]map[string]*Translation
 
-	mutex sync.RWMutex
+	mutex *sync.RWMutex
 }
 
 // ResourceName change display name in qor admin
@@ -56,7 +56,12 @@ type Translation struct {
 
 // New initialize I18n with backends
 func New(backends ...Backend) *I18n {
-	i18n := &I18n{Backends: backends, Translations: map[string]map[string]*Translation{}}
+	var mutex sync.RWMutex
+	i18n := &I18n{
+		Backends:     backends,
+		Translations: map[string]map[string]*Translation{},
+		mutex:        &mutex,
+	}
 	for i := len(backends) - 1; i >= 0; i-- {
 		var backend = backends[i]
 		for _, translation := range backend.LoadTranslations() {
@@ -116,17 +121,38 @@ func (i18n *I18n) DeleteTranslation(translation *Translation) (err error) {
 
 // EnableInlineEdit enable inline edit, return HTML used to edit the translation
 func (i18n *I18n) EnableInlineEdit(isInlineEdit bool) admin.I18n {
-	return &I18n{Translations: i18n.Translations, scope: i18n.scope, value: i18n.value, Backends: i18n.Backends, isInlineEdit: isInlineEdit}
+	return &I18n{
+		Translations: i18n.Translations,
+		mutex:        i18n.mutex,
+		scope:        i18n.scope,
+		value:        i18n.value,
+		Backends:     i18n.Backends,
+		isInlineEdit: isInlineEdit,
+	}
 }
 
 // Scope i18n scope
 func (i18n *I18n) Scope(scope string) admin.I18n {
-	return &I18n{Translations: i18n.Translations, scope: scope, value: i18n.value, Backends: i18n.Backends, isInlineEdit: i18n.isInlineEdit}
+	return &I18n{
+		Translations: i18n.Translations,
+		mutex:        i18n.mutex,
+		scope:        scope,
+		value:        i18n.value,
+		Backends:     i18n.Backends,
+		isInlineEdit: i18n.isInlineEdit,
+	}
 }
 
 // Default default value of translation if key is missing
 func (i18n *I18n) Default(value string) admin.I18n {
-	return &I18n{Translations: i18n.Translations, scope: i18n.scope, value: value, Backends: i18n.Backends, isInlineEdit: i18n.isInlineEdit}
+	return &I18n{
+		Translations: i18n.Translations,
+		mutex:        i18n.mutex,
+		scope:        i18n.scope,
+		value:        value,
+		Backends:     i18n.Backends,
+		isInlineEdit: i18n.isInlineEdit,
+	}
 }
 
 // T translate with locale, key and arguments
