@@ -92,7 +92,7 @@
         url: '/admin/translations'
       });
       this.jQueryelement.on("hidden", function(e, params) {
-        $(this).html($(this).text());
+        if (params == "save") $(this).html($(this).text());
       });
     }
   };
