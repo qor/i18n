@@ -79,10 +79,9 @@
     },
 
     makeInputEditable : function () {
-      jQuery.fn.editable.defaults.mode = 'popup';
-      jQuery.fn.editable.defaults.ajaxOptions = { type: 'POST' };
       this.jQueryelement.editable({
         pk: 1,
+        ajaxOptions: { type: 'POST' },
         params: function (params) {
           params.Value = params.value;
           params.Locale = jQuery(this).data('locale');

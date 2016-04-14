@@ -4555,10 +4555,11 @@ $(function(){
         */
         show: function (closeAll) {
             this.$element.addClass('editable-open');
-            if(closeAll !== false) {
+            // HACK by bin, no sure why even onblur is `cacnel`, still not close other form
+            //if(closeAll !== false) {
                 //close all open containers (except this)
                 this.closeOthers(this.$element[0]);
-            }
+            //}
 
             //render form
             this.$form = $('<div>');
@@ -5088,10 +5089,9 @@ Automatically shown in inline mode.
     },
 
     makeInputEditable : function () {
-      jQuery.fn.editable.defaults.mode = 'popup';
-      jQuery.fn.editable.defaults.ajaxOptions = { type: 'POST' };
       this.jQueryelement.editable({
         pk: 1,
+        ajaxOptions: { type: 'POST' },
         params: function (params) {
           params.Value = params.value;
           params.Locale = jQuery(this).data('locale');

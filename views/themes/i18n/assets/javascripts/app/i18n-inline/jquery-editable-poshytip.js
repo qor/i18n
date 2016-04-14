@@ -4553,10 +4553,11 @@ $(function(){
         */
         show: function (closeAll) {
             this.$element.addClass('editable-open');
-            if(closeAll !== false) {
+            // HACK by bin, no sure why even onblur is `cacnel`, still not close other form
+            //if(closeAll !== false) {
                 //close all open containers (except this)
                 this.closeOthers(this.$element[0]);
-            }
+            //}
 
             //render form
             this.$form = $('<div>');
