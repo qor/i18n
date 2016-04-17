@@ -11,9 +11,10 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"sync"
 
 	"github.com/qor/admin"
+	"github.com/qor/cache"
+	"github.com/qor/cache/memory"
 	"github.com/qor/qor"
 	"github.com/qor/qor/resource"
 	"github.com/qor/qor/utils"
@@ -29,9 +30,7 @@ type I18n struct {
 	value        string
 	isInlineEdit bool
 	Backends     []Backend
-	Translations map[string]map[string]*Translation
-
-	mutex sync.RWMutex
+	CacheStore   cache.CacheStoreInterface
 }
 
 // ResourceName change display name in qor admin
@@ -54,9 +53,13 @@ type Translation struct {
 	Backend Backend
 }
 
+func (translation Translation) cacheKey() string {
+	return fmt.Sprintf("%v::%v", translation.Locale, translation.Key)
+}
+
 // New initialize I18n with backends
 func New(backends ...Backend) *I18n {
-	i18n := &I18n{Backends: backends, Translations: map[string]map[string]*Translation{}}
+	i18n := &I18n{Backends: backends, CacheStore: memory.New()}
 	for i := len(backends) - 1; i >= 0; i-- {
 		var backend = backends[i]
 		for _, translation := range backend.LoadTranslations() {
@@ -69,25 +72,14 @@ func New(backends ...Backend) *I18n {
 
 // AddTranslation add translation
 func (i18n *I18n) AddTranslation(translation *Translation) {
-	i18n.mutex.Lock()
-	defer i18n.mutex.Unlock()
-	if i18n.Translations[translation.Locale] == nil {
-		i18n.Translations[translation.Locale] = map[string]*Translation{}
-	}
-	i18n.Translations[translation.Locale][translation.Key] = translation
+	i18n.CacheStore.Set(translation.cacheKey(), translation)
 }
 
 // SaveTranslation save translation
 func (i18n *I18n) SaveTranslation(translation *Translation) error {
-	var backends []Backend
-	if backend := translation.Backend; backend != nil {
-		backends = append(backends, backend)
-	}
-
 	for _, backend := range i18n.Backends {
 		if backend.SaveTranslation(translation) == nil {
 			i18n.AddTranslation(translation)
-			return nil
 		}
 	}
 
@@ -96,37 +88,26 @@ func (i18n *I18n) SaveTranslation(translation *Translation) error {
 
 // DeleteTranslation delete translation
 func (i18n *I18n) DeleteTranslation(translation *Translation) (err error) {
-	if translation.Backend == nil {
-		i18n.mutex.RLock()
-		if ts := i18n.Translations[translation.Locale]; ts != nil && ts[translation.Key] != nil {
-			translation = ts[translation.Key]
-		}
-		i18n.mutex.RUnlock()
+	for _, backend := range i18n.Backends {
+		backend.DeleteTranslation(translation)
 	}
 
-	if translation.Backend != nil {
-		if err = translation.Backend.DeleteTranslation(translation); err == nil {
-			i18n.mutex.Lock()
-			delete(i18n.Translations[translation.Locale], translation.Key)
-			i18n.mutex.Unlock()
-		}
-	}
-	return err
+	return i18n.CacheStore.Delete(translation.cacheKey())
 }
 
 // EnableInlineEdit enable inline edit, return HTML used to edit the translation
 func (i18n *I18n) EnableInlineEdit(isInlineEdit bool) admin.I18n {
-	return &I18n{Translations: i18n.Translations, scope: i18n.scope, value: i18n.value, Backends: i18n.Backends, isInlineEdit: isInlineEdit}
+	return &I18n{CacheStore: i18n.CacheStore, scope: i18n.scope, value: i18n.value, Backends: i18n.Backends, isInlineEdit: isInlineEdit}
 }
 
 // Scope i18n scope
 func (i18n *I18n) Scope(scope string) admin.I18n {
-	return &I18n{Translations: i18n.Translations, scope: scope, value: i18n.value, Backends: i18n.Backends, isInlineEdit: i18n.isInlineEdit}
+	return &I18n{CacheStore: i18n.CacheStore, scope: scope, value: i18n.value, Backends: i18n.Backends, isInlineEdit: i18n.isInlineEdit}
 }
 
 // Default default value of translation if key is missing
 func (i18n *I18n) Default(value string) admin.I18n {
-	return &I18n{Translations: i18n.Translations, scope: i18n.scope, value: value, Backends: i18n.Backends, isInlineEdit: i18n.isInlineEdit}
+	return &I18n{CacheStore: i18n.CacheStore, scope: i18n.scope, value: value, Backends: i18n.Backends, isInlineEdit: i18n.isInlineEdit}
 }
 
 // T translate with locale, key and arguments
@@ -137,41 +118,31 @@ func (i18n *I18n) T(locale, key string, args ...interface{}) template.HTML {
 		translationKey = strings.Join([]string{i18n.scope, key}, ".")
 	}
 
-	i18n.mutex.RLock()
-	if translations := i18n.Translations[locale]; translations != nil && translations[translationKey] != nil && translations[translationKey].Value != "" {
-		// Get localized translation
-		value = translations[translationKey].Value
-		i18n.mutex.RUnlock()
-	} else if translations := i18n.Translations[Default]; translations != nil && translations[translationKey] != nil {
+	var translation Translation
+	if err := i18n.CacheStore.Unmarshal(fmt.Sprintf("%v::%v", locale, key), &translation); err != nil || translation.Value == "" {
 		// Get default translation if not translated
-		value = translations[translationKey].Value
-		i18n.mutex.RUnlock()
-	} else {
-		i18n.mutex.RUnlock()
-		if value == "" {
-			value = key
+		if err := i18n.CacheStore.Unmarshal(fmt.Sprintf("%v::%v", Default, key), &translation); err != nil || translation.Value == "" {
+			// If not initialized
+			translation = Translation{Key: translationKey, Value: key, Locale: Default, Backend: i18n.Backends[0]}
+
+			// Save translation
+			i18n.SaveTranslation(&translation)
 		}
-		// Save translations
-		i18n.SaveTranslation(&Translation{Key: translationKey, Value: value, Locale: Default, Backend: i18n.Backends[0]})
 	}
 
-	if value == "" {
-		value = key
-	}
-
-	if str, err := cldr.Parse(locale, value, args...); err == nil {
+	if str, err := cldr.Parse(locale, translation.Value, args...); err == nil {
 		value = str
 	}
 
 	if i18n.isInlineEdit {
 		var editType string
-		if len(value) > 25 {
+		if len(translation.Value) > 25 {
 			editType = "data-type=\"textarea\""
 		}
-		value = fmt.Sprintf("<span class=\"qor-i18n-inline\" %s data-locale=\"%s\" data-key=\"%s\">%s</span>", editType, locale, key, value)
+		translation.Value = fmt.Sprintf("<span class=\"qor-i18n-inline\" %s data-locale=\"%s\" data-key=\"%s\">%s</span>", editType, locale, key, translation.Value)
 	}
 
-	return template.HTML(value)
+	return template.HTML(translation.Value)
 }
 
 // RenderInlineEditAssets render inline edit html, it is using: http://vitalets.github.io/x-editable/index.html
@@ -264,9 +235,6 @@ func (i18n *I18n) ConfigureQorResource(res resource.Resourcer) {
 		res.SearchAttrs("value") // generate search handler for i18n
 
 		res.GetAdmin().RegisterFuncMap("lt", func(locale, key string, withDefault bool) string {
-			i18n.mutex.RLock()
-			defer i18n.mutex.RUnlock()
-
 			if translations := i18n.Translations[locale]; translations != nil {
 				if t := translations[key]; t != nil && t.Value != "" {
 					return t.Value
@@ -323,12 +291,10 @@ func (i18n *I18n) ConfigureQorResource(res resource.Resourcer) {
 				}
 			}
 
-			i18n.mutex.RLock()
 			filterTranslations(i18n.Translations[getPrimaryLocale(context)])
 			if primaryLocale != editingLocale {
 				filterTranslations(i18n.Translations[getEditingLocale(context)])
 			}
-			i18n.mutex.RUnlock()
 
 			sort.Strings(keys)
 
