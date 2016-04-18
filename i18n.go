@@ -70,6 +70,20 @@ func New(backends ...Backend) *I18n {
 	return i18n
 }
 
+func (i18n *I18n) LoadTranslations() map[string]map[string]*Translation {
+	var translations = map[string]map[string]*Translation{}
+
+	for _, backend := range i18n.Backends {
+		for _, translation := range backend.LoadTranslations() {
+			if translations[translation.Locale] == nil {
+				translations[translation.Locale] = map[string]*Translation{}
+			}
+			translations[translation.Locale][translation.Key] = translation
+		}
+	}
+	return translations
+}
+
 // AddTranslation add translation
 func (i18n *I18n) AddTranslation(translation *Translation) {
 	i18n.CacheStore.Set(translation.cacheKey(), translation)
@@ -130,19 +144,23 @@ func (i18n *I18n) T(locale, key string, args ...interface{}) template.HTML {
 		}
 	}
 
-	if str, err := cldr.Parse(locale, translation.Value, args...); err == nil {
+	if translation.Value != "" {
+		value = translation.Value
+	}
+
+	if str, err := cldr.Parse(locale, value, args...); err == nil {
 		value = str
 	}
 
 	if i18n.isInlineEdit {
 		var editType string
-		if len(translation.Value) > 25 {
+		if len(value) > 25 {
 			editType = "data-type=\"textarea\""
 		}
-		translation.Value = fmt.Sprintf("<span class=\"qor-i18n-inline\" %s data-locale=\"%s\" data-key=\"%s\">%s</span>", editType, locale, key, translation.Value)
+		value = fmt.Sprintf("<span class=\"qor-i18n-inline\" %s data-locale=\"%s\" data-key=\"%s\">%s</span>", editType, locale, key, value)
 	}
 
-	return template.HTML(translation.Value)
+	return template.HTML(value)
 }
 
 // RenderInlineEditAssets render inline edit html, it is using: http://vitalets.github.io/x-editable/index.html
@@ -235,17 +253,14 @@ func (i18n *I18n) ConfigureQorResource(res resource.Resourcer) {
 		res.SearchAttrs("value") // generate search handler for i18n
 
 		res.GetAdmin().RegisterFuncMap("lt", func(locale, key string, withDefault bool) string {
-			if translations := i18n.Translations[locale]; translations != nil {
-				if t := translations[key]; t != nil && t.Value != "" {
-					return t.Value
-				}
+			var translation Translation
+			if err := i18n.CacheStore.Unmarshal(cacheKey(locale, key), &translation); err == nil && translation.Value != "" {
+				return translation.Value
 			}
 
 			if withDefault {
-				if translations := i18n.Translations[Default]; translations != nil {
-					if t := translations[key]; t != nil {
-						return t.Value
-					}
+				if err := i18n.CacheStore.Unmarshal(cacheKey(locale, key), &translation); err == nil && translation.Value != "" {
+					return translation.Value
 				}
 			}
 
@@ -271,6 +286,7 @@ func (i18n *I18n) ConfigureQorResource(res resource.Resourcer) {
 
 		res.GetAdmin().RegisterFuncMap("i18n_available_keys", func(context *admin.Context) (keys []string) {
 			var (
+				translations  = i18n.LoadTranslations()
 				keysMap       = map[string]bool{}
 				keyword       = strings.ToLower(context.Request.URL.Query().Get("keyword"))
 				primaryLocale = getPrimaryLocale(context)
@@ -291,9 +307,9 @@ func (i18n *I18n) ConfigureQorResource(res resource.Resourcer) {
 				}
 			}
 
-			filterTranslations(i18n.Translations[getPrimaryLocale(context)])
+			filterTranslations(translations[getPrimaryLocale(context)])
 			if primaryLocale != editingLocale {
-				filterTranslations(i18n.Translations[getEditingLocale(context)])
+				filterTranslations(translations[getEditingLocale(context)])
 			}
 
 			sort.Strings(keys)
@@ -346,4 +362,8 @@ func (i18n *I18n) ConfigureQorResource(res resource.Resourcer) {
 
 		admin.RegisterViewPath("github.com/qor/i18n/views")
 	}
+}
+
+func cacheKey(strs ...string) string {
+	return strings.Join(strs, "::")
 }
