@@ -63,7 +63,6 @@ func New(backends ...Backend) *I18n {
 	for i := len(backends) - 1; i >= 0; i-- {
 		var backend = backends[i]
 		for _, translation := range backend.LoadTranslations() {
-			translation.Backend = backend
 			i18n.AddTranslation(translation)
 		}
 	}
@@ -94,6 +93,7 @@ func (i18n *I18n) SaveTranslation(translation *Translation) error {
 	for _, backend := range i18n.Backends {
 		if backend.SaveTranslation(translation) == nil {
 			i18n.AddTranslation(translation)
+			return nil
 		}
 	}
 
