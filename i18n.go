@@ -126,18 +126,21 @@ func (i18n *I18n) Default(value string) admin.I18n {
 
 // T translate with locale, key and arguments
 func (i18n *I18n) T(locale, key string, args ...interface{}) template.HTML {
-	var value = i18n.value
-	var translationKey = key
+	var (
+		value          = i18n.value
+		translationKey = key
+	)
+
 	if i18n.scope != "" {
 		translationKey = strings.Join([]string{i18n.scope, key}, ".")
 	}
 
 	var translation Translation
-	if err := i18n.CacheStore.Unmarshal(fmt.Sprintf("%v::%v", locale, key), &translation); err != nil || translation.Value == "" {
+	if err := i18n.CacheStore.Unmarshal(cacheKey(locale, key), &translation); err != nil || translation.Value == "" {
 		// Get default translation if not translated
-		if err := i18n.CacheStore.Unmarshal(fmt.Sprintf("%v::%v", Default, key), &translation); err != nil || translation.Value == "" {
+		if err := i18n.CacheStore.Unmarshal(cacheKey(locale, key), &translation); err != nil || translation.Value == "" {
 			// If not initialized
-			translation = Translation{Key: translationKey, Value: key, Locale: Default, Backend: i18n.Backends[0]}
+			translation = Translation{Key: translationKey, Value: value, Locale: Default, Backend: i18n.Backends[0]}
 
 			// Save translation
 			i18n.SaveTranslation(&translation)
