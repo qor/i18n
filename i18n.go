@@ -13,6 +13,8 @@ import (
 	"strings"
 
 	"github.com/qor/admin"
+	"github.com/qor/cache"
+	"github.com/qor/cache/memory"
 	"github.com/qor/qor"
 	"github.com/qor/qor/resource"
 	"github.com/qor/qor/utils"
@@ -29,7 +31,7 @@ type I18n struct {
 	value        string
 	isInlineEdit bool
 	Backends     []Backend
-	Translations map[string]map[string]*Translation
+	CacheStore   cache.CacheStoreInterface
 }
 
 // ResourceName change display name in qor admin
@@ -49,37 +51,42 @@ type Translation struct {
 	Key     string
 	Locale  string
 	Value   string
-	Backend Backend
+	Backend Backend `json:"-"`
 }
 
 // New initialize I18n with backends
 func New(backends ...Backend) *I18n {
-	i18n := &I18n{Backends: backends, Translations: map[string]map[string]*Translation{}}
+	i18n := &I18n{Backends: backends, CacheStore: memory.New()}
 	for i := len(backends) - 1; i >= 0; i-- {
 		var backend = backends[i]
 		for _, translation := range backend.LoadTranslations() {
-			translation.Backend = backend
 			i18n.AddTranslation(translation)
 		}
 	}
 	return i18n
 }
 
-// AddTranslation add translation
-func (i18n *I18n) AddTranslation(translation *Translation) {
-	if i18n.Translations[translation.Locale] == nil {
-		i18n.Translations[translation.Locale] = map[string]*Translation{}
+func (i18n *I18n) LoadTranslations() map[string]map[string]*Translation {
+	var translations = map[string]map[string]*Translation{}
+
+	for _, backend := range i18n.Backends {
+		for _, translation := range backend.LoadTranslations() {
+			if translations[translation.Locale] == nil {
+				translations[translation.Locale] = map[string]*Translation{}
+			}
+			translations[translation.Locale][translation.Key] = translation
+		}
 	}
-	i18n.Translations[translation.Locale][translation.Key] = translation
+	return translations
+}
+
+// AddTranslation add translation
+func (i18n *I18n) AddTranslation(translation *Translation) error {
+	return i18n.CacheStore.Set(cacheKey(translation.Locale, translation.Key), translation)
 }
 
 // SaveTranslation save translation
 func (i18n *I18n) SaveTranslation(translation *Translation) error {
-	var backends []Backend
-	if backend := translation.Backend; backend != nil {
-		backends = append(backends, backend)
-	}
-
 	for _, backend := range i18n.Backends {
 		if backend.SaveTranslation(translation) == nil {
 			i18n.AddTranslation(translation)
@@ -92,59 +99,53 @@ func (i18n *I18n) SaveTranslation(translation *Translation) error {
 
 // DeleteTranslation delete translation
 func (i18n *I18n) DeleteTranslation(translation *Translation) (err error) {
-	if translation.Backend == nil {
-		if ts := i18n.Translations[translation.Locale]; ts != nil && ts[translation.Key] != nil {
-			translation = ts[translation.Key]
-		}
+	for _, backend := range i18n.Backends {
+		backend.DeleteTranslation(translation)
 	}
 
-	if translation.Backend != nil {
-		if err = translation.Backend.DeleteTranslation(translation); err == nil {
-			delete(i18n.Translations[translation.Locale], translation.Key)
-		}
-	}
-	return err
+	return i18n.CacheStore.Delete(cacheKey(translation.Locale, translation.Key))
 }
 
 // EnableInlineEdit enable inline edit, return HTML used to edit the translation
 func (i18n *I18n) EnableInlineEdit(isInlineEdit bool) admin.I18n {
-	return &I18n{Translations: i18n.Translations, scope: i18n.scope, value: i18n.value, Backends: i18n.Backends, isInlineEdit: isInlineEdit, Resource: i18n.Resource}
+	return &I18n{CacheStore: i18n.CacheStore, scope: i18n.scope, value: i18n.value, Backends: i18n.Backends, isInlineEdit: isInlineEdit, Resource: i18n.Resource}
 }
 
 // Scope i18n scope
 func (i18n *I18n) Scope(scope string) admin.I18n {
-	return &I18n{Translations: i18n.Translations, scope: scope, value: i18n.value, Backends: i18n.Backends, isInlineEdit: i18n.isInlineEdit, Resource: i18n.Resource}
+	return &I18n{CacheStore: i18n.CacheStore, scope: scope, value: i18n.value, Backends: i18n.Backends, isInlineEdit: i18n.isInlineEdit, Resource: i18n.Resource}
 }
 
 // Default default value of translation if key is missing
 func (i18n *I18n) Default(value string) admin.I18n {
-	return &I18n{Translations: i18n.Translations, scope: i18n.scope, value: value, Backends: i18n.Backends, isInlineEdit: i18n.isInlineEdit, Resource: i18n.Resource}
+	return &I18n{CacheStore: i18n.CacheStore, scope: i18n.scope, value: value, Backends: i18n.Backends, isInlineEdit: i18n.isInlineEdit, Resource: i18n.Resource}
 }
 
 // T translate with locale, key and arguments
 func (i18n *I18n) T(locale, key string, args ...interface{}) template.HTML {
-	var value = i18n.value
-	var translationKey = key
+	var (
+		value          = i18n.value
+		translationKey = key
+	)
+
 	if i18n.scope != "" {
 		translationKey = strings.Join([]string{i18n.scope, key}, ".")
 	}
 
-	if translations := i18n.Translations[locale]; translations != nil && translations[translationKey] != nil && translations[translationKey].Value != "" {
-		// Get localized translation
-		value = translations[translationKey].Value
-	} else if translations := i18n.Translations[Default]; translations != nil && translations[translationKey] != nil {
+	var translation Translation
+	if err := i18n.CacheStore.Unmarshal(cacheKey(locale, key), &translation); err != nil || translation.Value == "" {
 		// Get default translation if not translated
-		value = translations[translationKey].Value
-	} else {
-		if value == "" {
-			value = key
+		if err := i18n.CacheStore.Unmarshal(cacheKey(locale, key), &translation); err != nil || translation.Value == "" {
+			// If not initialized
+			translation = Translation{Key: translationKey, Value: value, Locale: Default, Backend: i18n.Backends[0]}
+
+			// Save translation
+			i18n.SaveTranslation(&translation)
 		}
-		// Save translations
-		i18n.SaveTranslation(&Translation{Key: translationKey, Value: value, Locale: Default, Backend: i18n.Backends[0]})
 	}
 
-	if value == "" {
-		value = key
+	if translation.Value != "" {
+		value = translation.Value
 	}
 
 	if str, err := cldr.Parse(locale, value, args...); err == nil {
@@ -253,24 +254,6 @@ func (i18n *I18n) ConfigureQorResource(res resource.Resourcer) {
 		res.GetAdmin().I18n = i18n
 		res.SearchAttrs("value") // generate search handler for i18n
 
-		res.GetAdmin().RegisterFuncMap("lt", func(locale, key string, withDefault bool) string {
-			if translations := i18n.Translations[locale]; translations != nil {
-				if t := translations[key]; t != nil && t.Value != "" {
-					return t.Value
-				}
-			}
-
-			if withDefault {
-				if translations := i18n.Translations[Default]; translations != nil {
-					if t := translations[key]; t != nil {
-						return t.Value
-					}
-				}
-			}
-
-			return ""
-		})
-
 		var getPrimaryLocale = func(context *admin.Context) string {
 			if locale := context.Request.Form.Get("primary_locale"); locale != "" {
 				return locale
@@ -288,21 +271,44 @@ func (i18n *I18n) ConfigureQorResource(res resource.Resourcer) {
 			return getLocaleFromContext(context.Context)
 		}
 
-		res.GetAdmin().RegisterFuncMap("i18n_available_keys", func(context *admin.Context) (keys []string) {
+		type matchedTranslation struct {
+			Key           string
+			PrimaryLocale string
+			PrimaryValue  string
+			EditingLocale string
+			EditingValue  string
+		}
+
+		res.GetAdmin().RegisterFuncMap("i18n_available_translations", func(context *admin.Context) (results []matchedTranslation) {
 			var (
-				keysMap       = map[string]bool{}
-				keyword       = context.Request.URL.Query().Get("keyword")
-				primaryLocale = getPrimaryLocale(context)
-				editingLocale = getEditingLocale(context)
+				translationsMap     = i18n.LoadTranslations()
+				matchedTranslations = map[string]matchedTranslation{}
+				keys                = []string{}
+				keyword             = strings.ToLower(context.Request.URL.Query().Get("keyword"))
+				primaryLocale       = getPrimaryLocale(context)
+				editingLocale       = getEditingLocale(context)
 			)
 
-			var filterTranslations = func(translations map[string]*Translation) {
+			var filterTranslations = func(translations map[string]*Translation, isPrimary bool) {
 				if translations != nil {
 					for key, translation := range translations {
-						if (keyword == "") || (strings.Index(strings.ToLower(translation.Key), strings.ToLower(keyword)) != -1 ||
+						if (keyword == "") || (strings.Index(strings.ToLower(translation.Key), keyword) != -1 ||
 							strings.Index(strings.ToLower(translation.Value), keyword) != -1) {
-							if _, ok := keysMap[key]; !ok {
-								keysMap[key] = true
+							if _, ok := matchedTranslations[key]; !ok {
+								var t = matchedTranslation{
+									Key:           key,
+									PrimaryLocale: primaryLocale,
+									EditingLocale: editingLocale,
+									EditingValue:  translation.Value,
+								}
+
+								if localeTranslations, ok := translationsMap[primaryLocale]; ok {
+									if v, ok := localeTranslations[key]; ok {
+										t.PrimaryValue = v.Value
+									}
+								}
+
+								matchedTranslations[key] = t
 								keys = append(keys, key)
 							}
 						}
@@ -310,9 +316,9 @@ func (i18n *I18n) ConfigureQorResource(res resource.Resourcer) {
 				}
 			}
 
-			filterTranslations(i18n.Translations[getPrimaryLocale(context)])
+			filterTranslations(translationsMap[getEditingLocale(context)], false)
 			if primaryLocale != editingLocale {
-				filterTranslations(i18n.Translations[getEditingLocale(context)])
+				filterTranslations(translationsMap[getPrimaryLocale(context)], true)
 			}
 
 			sort.Strings(keys)
@@ -329,20 +335,25 @@ func (i18n *I18n) ConfigureQorResource(res resource.Resourcer) {
 			}
 			context.Searcher.Pagination = pagination
 
+			var paginationKeys []string
 			if pagination.CurrentPage == -1 {
-				return keys
+				paginationKeys = keys
+			} else {
+				lastIndex := pagination.CurrentPage * pagination.PrePage
+				if pagination.Total < lastIndex {
+					lastIndex = pagination.Total
+				}
+
+				startIndex := (pagination.CurrentPage - 1) * pagination.PrePage
+				if lastIndex >= startIndex {
+					paginationKeys = keys[startIndex:lastIndex]
+				}
 			}
 
-			lastIndex := pagination.CurrentPage * pagination.PrePage
-			if pagination.Total < lastIndex {
-				lastIndex = pagination.Total
+			for _, key := range paginationKeys {
+				results = append(results, matchedTranslations[key])
 			}
-
-			startIndex := (pagination.CurrentPage - 1) * pagination.PrePage
-			if lastIndex >= startIndex {
-				return keys[startIndex:lastIndex]
-			}
-			return []string{}
+			return results
 		})
 
 		res.GetAdmin().RegisterFuncMap("i18n_primary_locale", getPrimaryLocale)
@@ -365,4 +376,8 @@ func (i18n *I18n) ConfigureQorResource(res resource.Resourcer) {
 
 		admin.RegisterViewPath("github.com/qor/i18n/views")
 	}
+}
+
+func cacheKey(strs ...string) string {
+	return strings.Join(strs, "/")
 }
