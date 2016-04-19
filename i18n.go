@@ -3,6 +3,7 @@ package i18n
 import (
 	"errors"
 	"fmt"
+	"github.com/fatih/color"
 	"html/template"
 	"io/ioutil"
 	"net/http"
@@ -156,6 +157,9 @@ func (i18n *I18n) T(locale, key string, args ...interface{}) template.HTML {
 		var editType string
 		if len(value) > 25 {
 			editType = "data-type=\"textarea\""
+		}
+		if i18n.Resource == nil {
+			color.Yellow("[WARNING] I18n: I18n's resource should be configured!")
 		}
 		assets_tag := fmt.Sprintf("<script data-prefix=\"%v\" src=\"/admin/assets/javascripts/i18n-checker.js?theme=i18n\"></script>", i18n.Resource.GetAdmin().GetRouter().Prefix)
 		value = fmt.Sprintf("%s<span class=\"qor-i18n-inline\" %s data-locale=\"%s\" data-key=\"%s\">%s</span>", assets_tag, editType, locale, key, value)
