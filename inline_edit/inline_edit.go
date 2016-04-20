@@ -40,7 +40,8 @@ func inlineEdit(I18n *i18n.I18n, locale string, isInline bool) func(string, ...i
 			if len(value) > 25 {
 				editType = "data-type=\"textarea\""
 			}
-			assetsTag := fmt.Sprintf("<script data-prefix=\"%v\" src=\"/%v/assets/javascripts/i18n-checker.js?theme=i18n\"></script>", I18n.Resource.GetAdmin().GetRouter().Prefix)
+			prefix := I18n.Resource.GetAdmin().GetRouter().Prefix
+			assetsTag := fmt.Sprintf("<script data-prefix=\"%v\" src=\"%v/assets/javascripts/i18n-checker.js?theme=i18n\"></script>", prefix, prefix)
 			return template.HTML(fmt.Sprintf("%s<span class=\"qor-i18n-inline\" %s data-locale=\"%s\" data-key=\"%s\">%s</span>", assetsTag, editType, locale, key, string(value)))
 		}
 		return value
