@@ -3,7 +3,6 @@ package i18n
 import (
 	"errors"
 	"fmt"
-	"github.com/fatih/color"
 	"html/template"
 	"io/ioutil"
 	"net/http"
@@ -27,12 +26,11 @@ var Default = "en-US"
 
 // I18n struct that hold all translations
 type I18n struct {
-	Resource     *admin.Resource
-	scope        string
-	value        string
-	isInlineEdit bool
-	Backends     []Backend
-	CacheStore   cache.CacheStoreInterface
+	Resource   *admin.Resource
+	scope      string
+	value      string
+	Backends   []Backend
+	CacheStore cache.CacheStoreInterface
 }
 
 // ResourceName change display name in qor admin
@@ -107,19 +105,14 @@ func (i18n *I18n) DeleteTranslation(translation *Translation) (err error) {
 	return i18n.CacheStore.Delete(cacheKey(translation.Locale, translation.Key))
 }
 
-// EnableInlineEdit enable inline edit, return HTML used to edit the translation
-func (i18n *I18n) EnableInlineEdit(isInlineEdit bool) admin.I18n {
-	return &I18n{CacheStore: i18n.CacheStore, scope: i18n.scope, value: i18n.value, Backends: i18n.Backends, isInlineEdit: isInlineEdit, Resource: i18n.Resource}
-}
-
 // Scope i18n scope
 func (i18n *I18n) Scope(scope string) admin.I18n {
-	return &I18n{CacheStore: i18n.CacheStore, scope: scope, value: i18n.value, Backends: i18n.Backends, isInlineEdit: i18n.isInlineEdit, Resource: i18n.Resource}
+	return &I18n{CacheStore: i18n.CacheStore, scope: scope, value: i18n.value, Backends: i18n.Backends, Resource: i18n.Resource}
 }
 
 // Default default value of translation if key is missing
 func (i18n *I18n) Default(value string) admin.I18n {
-	return &I18n{CacheStore: i18n.CacheStore, scope: i18n.scope, value: value, Backends: i18n.Backends, isInlineEdit: i18n.isInlineEdit, Resource: i18n.Resource}
+	return &I18n{CacheStore: i18n.CacheStore, scope: i18n.scope, value: value, Backends: i18n.Backends, Resource: i18n.Resource}
 }
 
 // T translate with locale, key and arguments
@@ -151,18 +144,6 @@ func (i18n *I18n) T(locale, key string, args ...interface{}) template.HTML {
 
 	if str, err := cldr.Parse(locale, value, args...); err == nil {
 		value = str
-	}
-
-	if i18n.isInlineEdit {
-		var editType string
-		if len(value) > 25 {
-			editType = "data-type=\"textarea\""
-		}
-		if i18n.Resource == nil {
-			color.Yellow("[WARNING] I18n: I18n's resource should be configured!")
-		}
-		assets_tag := fmt.Sprintf("<script data-prefix=\"%v\" src=\"/admin/assets/javascripts/i18n-checker.js?theme=i18n\"></script>", i18n.Resource.GetAdmin().GetRouter().Prefix)
-		value = fmt.Sprintf("%s<span class=\"qor-i18n-inline\" %s data-locale=\"%s\" data-key=\"%s\">%s</span>", assets_tag, editType, locale, key, value)
 	}
 
 	return template.HTML(value)
