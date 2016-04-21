@@ -5,8 +5,13 @@ import (
 	"html/template"
 	"net/http"
 
+	"github.com/qor/admin"
 	"github.com/qor/i18n"
 )
+
+func init() {
+	admin.RegisterViewPath("github.com/qor/i18n/inline_edit/views")
+}
 
 func enabledInlineEdit(request *http.Request) bool {
 	return true
