@@ -127,6 +127,10 @@ func (i18n *I18n) T(locale, key string, args ...interface{}) template.HTML {
 		translationKey = key
 	)
 
+	if locale == "" {
+		locale = Default
+	}
+
 	if i18n.scope != "" {
 		translationKey = strings.Join([]string{i18n.scope, key}, ".")
 	}
