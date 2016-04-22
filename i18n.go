@@ -138,9 +138,9 @@ func (i18n *I18n) T(locale, key string, args ...interface{}) template.HTML {
 	var translation Translation
 	if err := i18n.CacheStore.Unmarshal(cacheKey(locale, key), &translation); err != nil || translation.Value == "" {
 		// Get default translation if not translated
-		if err := i18n.CacheStore.Unmarshal(cacheKey(locale, key), &translation); err != nil || translation.Value == "" {
+		if err := i18n.CacheStore.Unmarshal(cacheKey(Default, key), &translation); err != nil || translation.Value == "" {
 			// If not initialized
-			translation = Translation{Key: translationKey, Value: value, Locale: Default, Backend: i18n.Backends[0]}
+			translation = Translation{Key: translationKey, Value: value, Locale: locale, Backend: i18n.Backends[0]}
 
 			// Save translation
 			i18n.SaveTranslation(&translation)
