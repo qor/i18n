@@ -23,7 +23,7 @@
   var EVENT_INPUT = 'input';
 
   function I18nInlineEdit(element, options) {
-    this.jQueryelement = jQuery(element);
+    this.$element = jQuery(element);
     this.options = jQuery.extend({}, I18nInlineEdit.DEFAULTS, jQuery.isPlainObject(options) && options);
     this.multiple = false;
     this.init();
@@ -61,25 +61,25 @@
     contructor: I18nInlineEdit,
 
     init: function () {
-      var jQuerythis = this.jQueryelement;
+      var $this = this.$element;
       this.makeInputEditable();
       this.bind();
     },
 
     bind: function () {
-      this.jQueryelement.
+      this.$element.
         on(EVENT_CLICK, jQuery.proxy(this.click, this)).
         on(EVENT_CHANGE, jQuery.proxy(this.change, this));
     },
 
     unbind: function () {
-      this.jQueryelement.
+      this.$element.
         off(EVENT_CLICK, this.click).
         off(EVENT_CHANGE, this.change);
     },
 
     makeInputEditable : function () {
-      this.jQueryelement.editable({
+      this.$element.editable({
         pk: 1,
         ajaxOptions: { type: 'POST' },
         params: function (params) {
@@ -90,7 +90,7 @@
         },
         url: '/admin/translations'
       });
-      this.jQueryelement.on("hidden", function(e, params) {
+      this.$element.on("hidden", function(e, params) {
         if (params == "save") $(this).html($(this).text());
       });
     }
@@ -100,12 +100,12 @@
 
   I18nInlineEdit.plugin = function (options) {
     return this.each(function () {
-      var jQuerythis = jQuery(this);
-      var data = jQuerythis.data(NAMESPACE);
+      var $this = jQuery(this);
+      var data = $this.data(NAMESPACE);
       var fn;
 
       if (!data) {
-        jQuerythis.data(NAMESPACE, (data = new I18nInlineEdit(this, options)));
+        $this.data(NAMESPACE, (data = new I18nInlineEdit(this, options)));
       }
 
       if (typeof options === 'string' && jQuery.isFunction((fn = data[options]))) {
