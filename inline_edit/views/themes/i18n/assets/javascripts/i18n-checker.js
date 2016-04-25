@@ -15,11 +15,9 @@ if (!window.loadedI18nAsset) {
       document.getElementsByTagName("head")[0].appendChild(fileref);
   };
 
-
   window.loadedI18nAsset = true;
   var prefix = document.currentScript.getAttribute("data-prefix");
-  loadjscssfile(prefix + "/assets/javascripts/vendors/jquery.min.js", "js");
+  window.jQuery || loadjscssfile(prefix + "/assets/javascripts/vendors/jquery.min.js", "js");
   loadjscssfile(prefix + "/assets/javascripts/i18n-inline.js?theme=i18n", "js");
-  loadjscssfile(prefix + "/assets/stylesheets/jquery-editable.css?theme=i18n", "css");
   loadjscssfile(prefix + "/assets/stylesheets/i18n-inline.css?theme=i18n", "css");
 }

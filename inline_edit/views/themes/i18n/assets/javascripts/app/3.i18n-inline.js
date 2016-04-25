@@ -11,6 +11,7 @@
   }
 })(function (jQuery) {
 
+
   'use strict';
 
   var location = window.location;
@@ -64,6 +65,7 @@
       var $this = this.$element;
       this.makeInputEditable();
       this.bind();
+
     },
 
     bind: function () {
