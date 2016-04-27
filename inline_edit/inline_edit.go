@@ -3,7 +3,6 @@ package inline_edit
 import (
 	"fmt"
 	"html/template"
-	"net/http"
 
 	"github.com/qor/admin"
 	"github.com/qor/i18n"
@@ -13,17 +12,15 @@ func init() {
 	admin.RegisterViewPath("github.com/qor/i18n/inline_edit/views")
 }
 
-func enabledInlineEdit(request *http.Request) bool {
-	return true
-}
-
-func GenerateFuncMaps(I18n *i18n.I18n, locale string, request *http.Request) template.FuncMap {
+// FuncMap generate func map for inline edit
+func FuncMap(I18n *i18n.I18n, locale string, enableInlineEdit bool) template.FuncMap {
 	return template.FuncMap{
-		"t": inlineEdit(I18n, locale, enabledInlineEdit(request)),
+		"t": InlineEdit(I18n, locale, enableInlineEdit),
 	}
 }
 
-func inlineEdit(I18n *i18n.I18n, locale string, isInline bool) func(string, ...interface{}) template.HTML {
+// InlineEdit enable inline edit
+func InlineEdit(I18n *i18n.I18n, locale string, isInline bool) func(string, ...interface{}) template.HTML {
 	return func(key string, args ...interface{}) template.HTML {
 		// Get Translation Value
 		var value template.HTML
