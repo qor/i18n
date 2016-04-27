@@ -198,7 +198,7 @@
     destroy: function () {
       this.unbind();
       this.$element.removeData(NAMESPACE);
-    },
+    }
   };
 
   I18n.DEFAULTS = {};
