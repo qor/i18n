@@ -314,13 +314,13 @@ func (i18n *I18n) ConfigureQorResource(res resource.Resourcer) {
 
 			pagination := context.Searcher.Pagination
 			pagination.Total = len(keys)
-			pagination.PrePage = 25
+			pagination.PerPage = 25
 			pagination.CurrentPage, _ = strconv.Atoi(context.Request.URL.Query().Get("page"))
 			if pagination.CurrentPage == 0 {
 				pagination.CurrentPage = 1
 			}
 			if pagination.CurrentPage > 0 {
-				pagination.Pages = pagination.Total / pagination.PrePage
+				pagination.Pages = pagination.Total / pagination.PerPage
 			}
 			context.Searcher.Pagination = pagination
 
@@ -328,12 +328,12 @@ func (i18n *I18n) ConfigureQorResource(res resource.Resourcer) {
 			if pagination.CurrentPage == -1 {
 				paginationKeys = keys
 			} else {
-				lastIndex := pagination.CurrentPage * pagination.PrePage
+				lastIndex := pagination.CurrentPage * pagination.PerPage
 				if pagination.Total < lastIndex {
 					lastIndex = pagination.Total
 				}
 
-				startIndex := (pagination.CurrentPage - 1) * pagination.PrePage
+				startIndex := (pagination.CurrentPage - 1) * pagination.PerPage
 				if lastIndex >= startIndex {
 					paginationKeys = keys[startIndex:lastIndex]
 				}
