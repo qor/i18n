@@ -65,6 +65,7 @@ func New(backends ...Backend) *I18n {
 	return i18n
 }
 
+// LoadTranslations load translations as map `map[locale]map[key]*Translation`
 func (i18n *I18n) LoadTranslations() map[string]map[string]*Translation {
 	var translations = map[string]map[string]*Translation{}
 
