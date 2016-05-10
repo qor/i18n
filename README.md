@@ -110,15 +110,19 @@ To use I18n with QOR, simply add it as resource to the admin:
 
 You could manage translations with QOR Admin interface after register it into QOR Admin, But usually hard to translate a translation without its context, the inline edit is made to resolve the problem
 
-With it, you could manage translations from frontend, just like [Integrate with Golang Templates](#integrate_with_golang_templates), you need to register a func map for Golang templates to render inline editable translations.
+With it, you could manage translations from frontend, just like [Integrate with Golang Templates](#integrate-with-golang-templates), you need to register a func map for Golang templates to render inline editable translations.
 
-The good thing is we have created a package could be used to generate the funcmap for you, you could just use it when parseing your templates
+The good thing is we have created a package do the job for you, it will generate a funcmap, you just need to use it when parsing your templates
 
 ```go
 // `I18n` hold translations backends
 // `en-US` current locale
-// `true` enable inline edit or not, it inline edit not enabled, it works just like the funcmap in section "Integrate with Golang Templates"
-inline_edit.FuncMap(I18n, "en-US", true)
+// `true` enable inline edit mode or not, if inline edit not enabled, it works just like the funcmap in section "Integrate with Golang Templates"
+inline_edit.FuncMap(I18n, "en-US", true) // => map[string]interface{}{
+                                         //     "t": func(string, ...interface{}) template.HTML {
+                                         //        // ...
+                                         //      },
+                                         //    }
 ```
 
 ## License
