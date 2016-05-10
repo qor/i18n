@@ -70,9 +70,9 @@ I18n.AddTranslation(&i18n.Translation{Key: "ordered_params", Locale: "en-US", Va
 I18n.T("en-US", "ordered_params", "string1", "string2") //=> string1 string2 string1
 ```
 
-### Golang Templates
+### Integrate with Golang Templates
 
-You could define a `T` method and register it as FuncMap:
+You could define a `t` method and register it as FuncMap:
 
 ```go
 
@@ -87,16 +87,16 @@ func T(key string, value string, args ...interface{}) string {
 }
 
 // then use it like
-{{T "home_page.how_it_works" "HOW DOES IT WORK? {{$1}}" "It works" }}
+{{t "home_page.how_it_works" "HOW DOES IT WORK? {{$1}}" "It works" }}
 ```
 
-## [Qor Support](https://github.com/qor/qor)
+## [QOR Support](https://github.com/qor/qor)
 
 [QOR](http://getqor.com) is architected from the ground up to accelerate development and deployment of Content Management Systems, E-commerce Systems, and Business Applications and as such is comprised of modules that abstract common features for such systems.
 
 Although I18n can be used standalone, it works very nicely with QOR - if you have requirements to manage your application's data, be sure to check QOR out!
 
-To use I18n with Qor, simply add it as resource to the admin:
+To use I18n with QOR, simply add it as resource to the admin:
 
 ```go
  Admin.AddResource(I18n)
@@ -105,6 +105,21 @@ To use I18n with Qor, simply add it as resource to the admin:
 [QOR Demo:  http://demo.getqor.com/admin](http://demo.getqor.com/admin)
 
 [I18n Demo with QOR](http://demo.getqor.com/admin/translations)
+
+### Inline Edit
+
+You could manage translations with QOR Admin interface after register it into QOR Admin, But usually hard to translate a translation without its context, the inline edit is made to resolve the problem
+
+With it, you could manage translations from frontend, just like [Integrate with Golang Templates](#integrate_with_golang_templates), you need to register a func map for Golang templates to render inline editable translations.
+
+The good thing is we have created a package could be used to generate the funcmap for you, you could just use it when parseing your templates
+
+```go
+// `I18n` hold translations backends
+// `en-US` current locale
+// `true` enable inline edit or not, it inline edit not enabled, it works just like the funcmap in section "Integrate with Golang Templates"
+inline_edit.FuncMap(I18n, "en-US", true)
+```
 
 ## License
 
