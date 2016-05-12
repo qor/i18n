@@ -364,7 +364,7 @@ func (i18n *I18n) ConfigureQorResource(res resource.Resourcer) {
 		router.Post(res.ToParam(), controller.Update)
 		router.Put(res.ToParam(), controller.Update)
 
-		admin.RegisterViewPath("github.com/qor/i18n/views")
+		res.GetAdmin().RegisterViewPath("github.com/qor/i18n/views")
 	}
 }
 

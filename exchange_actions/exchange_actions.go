@@ -9,7 +9,6 @@ import (
 	"sort"
 	"time"
 
-	"github.com/qor/admin"
 	"github.com/qor/i18n"
 	"github.com/qor/media_library"
 	"github.com/qor/worker"
@@ -17,7 +16,7 @@ import (
 
 // RegisterExchangeJobs register i18n jobs into worker
 func RegisterExchangeJobs(I18n *i18n.I18n, Worker *worker.Worker) {
-	admin.RegisterViewPath("github.com/qor/i18n/exchange_actions/views")
+	Worker.Admin.RegisterViewPath("github.com/qor/i18n/exchange_actions/views")
 
 	Worker.RegisterJob(&worker.Job{
 		Name:  "Export Translations",
