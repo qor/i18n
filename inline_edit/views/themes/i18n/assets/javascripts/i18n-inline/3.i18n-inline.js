@@ -13,15 +13,9 @@
 
 
   'use strict';
-
-  var location = window.location;
-
   var NAMESPACE = 'qor.i18n.inline';
   var EVENT_CLICK = 'click.' + NAMESPACE;
   var EVENT_CHANGE = 'change.' + NAMESPACE;
-
-  // For Qor Autoheight plugin
-  var EVENT_INPUT = 'input';
 
   function I18nInlineEdit(element, options) {
     this.$element = jQuery(element);
@@ -30,42 +24,12 @@
     this.init();
   }
 
-  function encodeSearch(data) {
-    var params = [];
-
-    if (jQuery.isPlainObject(data)) {
-      jQuery.each(data, function (name, value) {
-        params.push([name, value].join('='));
-      });
-    }
-
-    return params.join('&');
-  }
-
-  function decodeSearch(search) {
-    var data = {};
-
-    if (search) {
-      search = search.replace('?', '').split('&');
-
-      jQuery.each(search, function (i, param) {
-        param = param.split('=');
-        i = param[0];
-        data[i] = param[1];
-      });
-    }
-
-    return data;
-  }
-
   I18nInlineEdit.prototype = {
     contructor: I18nInlineEdit,
 
     init: function () {
-      var $this = this.$element;
       this.makeInputEditable();
       this.bind();
-
     },
 
     bind: function () {
