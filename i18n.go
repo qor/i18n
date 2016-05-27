@@ -69,7 +69,8 @@ func New(backends ...Backend) *I18n {
 func (i18n *I18n) LoadTranslations() map[string]map[string]*Translation {
 	var translations = map[string]map[string]*Translation{}
 
-	for _, backend := range i18n.Backends {
+	for i := len(i18n.Backends); i > 0; i-- {
+		backend := i18n.Backends[i-1]
 		for _, translation := range backend.LoadTranslations() {
 			if translations[translation.Locale] == nil {
 				translations[translation.Locale] = map[string]*Translation{}
