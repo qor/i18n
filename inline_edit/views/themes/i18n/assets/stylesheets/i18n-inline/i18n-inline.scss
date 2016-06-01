@@ -26,10 +26,6 @@
     white-space: normal; /* reset white-space decalred in parent*/
 }
 
-.editable-buttons .editable-cancel {
-   margin-left: 7px;
-}
-
 /*for jquery-ui buttons need set height to look more pretty*/
 .editable-buttons button.ui-button-icon-only {
    height: 24px;
@@ -182,14 +178,16 @@ a.editable-click.editable-disabled:hover {
 
 
 .editable-input input {
-  padding: 4px 6px;
+  padding: 4px 0 4px 6px;
   font-size: 14px;
   line-height: 20px;
   color: #555555;
   vertical-align: middle;
-  margin: 8px 0;
+  margin: 0 0 8px;
   border: 0;
-  border-bottom: 1px solid #cccccc;
+  border-radius: 0;
+  border-bottom: 2px solid #0277BD;
+  min-width: 220px;
 }
 
 .editableform {
@@ -197,39 +195,48 @@ a.editable-click.editable-disabled:hover {
               0 3px 1px -2px rgba(0, 0, 0, .2),
               0 1px 5px 0 rgba(0, 0, 0, .12);
 
-  padding: 8px 5px;
+  padding: 16px;
   text-align: left;
   background-color: #ffffff;
+  &:before,
+  &:after {
+    content: " ";
+    display: table;
+  }
+  &:after {
+    clear: both;
+  }
 }
 
 .editableform textarea{
   border: 1px solid #ccc;
-  border-radius: 4px;
+  border-radius: 2px;
   font-size: 14px;
   color: #555;
+  min-width: 400px;
+  min-height: 120px;
 }
 
 
-.editable-submit {
-  margin-top: 5px;
-  cursor: pointer;
+.editable-submit,.editable-cancel {
+  margin-top: 12px;
+  font-size: 14px;
+  border: 0;
+  padding: 8px 16px;
   text-transform: uppercase;
-  min-width: 50px;
-  height: 30px;
-  background-color: rgb(33,150,243);
+  cursor: pointer;
+}
+.editable-submit {
+  background-color: #2196f3;
   box-shadow: 0 2px 2px 0 rgba(0,0,0,.14),0 3px 1px -2px rgba(0,0,0,.2),0 1px 5px 0 rgba(0,0,0,.12);
   border-radius: 2px;
-  font-size: 16px;
   color: white;
-  border-color: transparent;
+  float: right;
 }
 .editable-cancel {
-  cursor: pointer;
-  text-transform: uppercase;
-  min-width: 50px;
-  height: 30px;
   background-color: #fff;
-  font-size: 16px;
   color: #555;
-  border: 0;
+  float: left;
+  text-align: left;
+  padding-left: 0;
 }
