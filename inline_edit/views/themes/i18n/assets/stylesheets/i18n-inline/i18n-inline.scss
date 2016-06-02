@@ -120,7 +120,9 @@
    white-space: pre-wrap;
 }
 .editable-container.editable-popup {
-    max-width: none !important; /* without this rule poshytip/tooltip does not stretch */
+    font-family: 'Roboto', 'Helvetica Neue',Helvetica,Arial,sans-serif;
+    z-index: 9999;
+    max-width: none !important;
 }
 
 .editable-container.popover {
