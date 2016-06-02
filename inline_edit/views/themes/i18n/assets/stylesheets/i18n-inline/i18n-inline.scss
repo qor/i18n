@@ -122,7 +122,7 @@
 .editable-container.editable-popup {
     font-family: 'Roboto', 'Helvetica Neue',Helvetica,Arial,sans-serif;
     z-index: 9999;
-    max-width: none !important;
+    max-width: 100% !important;
 }
 
 .editable-container.popover {
@@ -200,6 +200,7 @@ a.editable-click.editable-disabled:hover {
   padding: 16px;
   text-align: left;
   background-color: #ffffff;
+  box-sizing: border-box;
   &:before,
   &:after {
     content: " ";
@@ -241,4 +242,20 @@ a.editable-click.editable-disabled:hover {
   float: left;
   text-align: left;
   padding-left: 0;
+}
+
+
+
+@media only screen and (max-width: 767px){
+  .editable-container.editable-popup{
+    width: 100%;
+    left: 0 !important;
+  }
+  .editable-input input{
+    width: 100%;
+  }
+  .editableform textarea{
+    width: 100%;
+    min-width: 0;
+  }
 }
