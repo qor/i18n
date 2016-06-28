@@ -106,10 +106,12 @@ func RegisterExchangeJobs(I18n *i18n.I18n, Worker *worker.Worker) {
 						for _, values := range records[1:] {
 							for idx, value := range values[1:] {
 								if value == "" {
-									I18n.DeleteTranslation(&i18n.Translation{
-										Key:    values[0],
-										Locale: locales[idx],
-									})
+									if values[0] != "" && locales[idx] != "" {
+										I18n.DeleteTranslation(&i18n.Translation{
+											Key:    values[0],
+											Locale: locales[idx],
+										})
+									}
 								} else {
 									I18n.SaveTranslation(&i18n.Translation{
 										Key:    values[0],
