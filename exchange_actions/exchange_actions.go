@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/qor/admin"
 	"github.com/qor/i18n"
 	"github.com/qor/media_library"
 	"github.com/qor/worker"
@@ -19,9 +20,18 @@ import (
 func RegisterExchangeJobs(I18n *i18n.I18n, Worker *worker.Worker) {
 	Worker.Admin.RegisterViewPath("github.com/qor/i18n/exchange_actions/views")
 
+	// Export Translations
+	type exportTranslationArgument struct {
+		Scope string
+	}
+
+	exportTranslationResource := Worker.Admin.NewResource(&exportTranslationArgument{})
+	exportTranslationResource.Meta(&admin.Meta{Name: "Scope", Type: "select_one", Collection: []string{"All", "Backend", "Frontend"}})
+
 	Worker.RegisterJob(&worker.Job{
-		Name:  "Export Translations",
-		Group: "Export/Import Translations From CSV file",
+		Name:     "Export Translations",
+		Group:    "Export/Import Translations From CSV file",
+		Resource: exportTranslationResource,
 		Handler: func(arg interface{}, qorJob worker.QorJobInterface) (err error) {
 			var (
 				locales          []string
@@ -30,6 +40,7 @@ func RegisterExchangeJobs(I18n *i18n.I18n, Worker *worker.Worker) {
 				filename         = fmt.Sprintf("/downloads/translations.%v.csv", time.Now().UnixNano())
 				fullFilename     = path.Join("public", filename)
 				i18nTranslations = I18n.LoadTranslations()
+				scope            = arg.(*exportTranslationArgument).Scope
 			)
 			qorJob.AddLog("Exporting translations...")
 
@@ -68,6 +79,13 @@ func RegisterExchangeJobs(I18n *i18n.I18n, Worker *worker.Worker) {
 
 			// Write CSV file
 			for _, translationKey := range translationKeys {
+				// Filter out translation by scope
+				if scope == "Backend" && !strings.HasPrefix(translationKey, "qor_") {
+					continue
+				}
+				if scope == "Frontend" && strings.HasPrefix(translationKey, "qor_") {
+					continue
+				}
 				var translations = []string{translationKey}
 				for _, locale := range locales {
 					var value string
@@ -102,11 +120,13 @@ func RegisterExchangeJobs(I18n *i18n.I18n, Worker *worker.Worker) {
 				reader.TrimLeadingSpace = true
 				if records, err := reader.ReadAll(); err == nil {
 					if len(records) > 1 && len(records[0]) > 1 {
-						recordCount := len(records) - 1
-						perCount := recordCount/20 + 1
-						processedRecordLogs := []string{}
-						locales := records[0][1:]
-						index := 1
+						var (
+							recordCount         = len(records) - 1
+							perCount            = recordCount/20 + 1
+							processedRecordLogs = []string{}
+							locales             = records[0][1:]
+							index               = 1
+						)
 						for _, values := range records[1:] {
 							logMsg := ""
 							for idx, value := range values[1:] {
