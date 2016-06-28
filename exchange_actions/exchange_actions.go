@@ -7,6 +7,7 @@ import (
 	"path"
 	"path/filepath"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/qor/i18n"
@@ -101,9 +102,13 @@ func RegisterExchangeJobs(I18n *i18n.I18n, Worker *worker.Worker) {
 				reader.TrimLeadingSpace = true
 				if records, err := reader.ReadAll(); err == nil {
 					if len(records) > 1 && len(records[0]) > 1 {
+						recordCount := len(records) - 1
+						perCount := recordCount/20 + 1
+						processedRecordLogs := []string{}
 						locales := records[0][1:]
-
+						index := 1
 						for _, values := range records[1:] {
+							logMsg := ""
 							for idx, value := range values[1:] {
 								if value == "" {
 									if values[0] != "" && locales[idx] != "" {
@@ -111,6 +116,7 @@ func RegisterExchangeJobs(I18n *i18n.I18n, Worker *worker.Worker) {
 											Key:    values[0],
 											Locale: locales[idx],
 										})
+										logMsg += fmt.Sprintf("%v/%v Deleted %v,%v\n", index, recordCount, locales[idx], values[0])
 									}
 								} else {
 									I18n.SaveTranslation(&i18n.Translation{
@@ -118,9 +124,17 @@ func RegisterExchangeJobs(I18n *i18n.I18n, Worker *worker.Worker) {
 										Locale: locales[idx],
 										Value:  value,
 									})
+									logMsg += fmt.Sprintf("%v/%v Imporeted %v,%v,%v\n", index, recordCount, locales[idx], values[0], value)
 								}
 							}
+							processedRecordLogs = append(processedRecordLogs, logMsg)
+							if len(processedRecordLogs) < perCount {
+								qorJob.AddLog(strings.Join(processedRecordLogs, ""))
+								processedRecordLogs = []string{}
+							}
+							index++
 						}
+						qorJob.AddLog(strings.Join(processedRecordLogs, ""))
 					}
 				}
 				qorJob.AddLog("Imported translations")
