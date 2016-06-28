@@ -131,6 +131,7 @@ func RegisterExchangeJobs(I18n *i18n.I18n, Worker *worker.Worker) {
 							if len(processedRecordLogs) < perCount {
 								qorJob.AddLog(strings.Join(processedRecordLogs, ""))
 								processedRecordLogs = []string{}
+								qorJob.SetProgress(uint(float32(index) / float32(recordCount+1) * 100))
 							}
 							index++
 						}
