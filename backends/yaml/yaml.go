@@ -66,11 +66,15 @@ func (backend *Backend) LoadTranslations() (translations []*i18n.Translation) {
 	for _, file := range backend.files {
 		if content, err := ioutil.ReadFile(file); err == nil {
 			var slice yaml.MapSlice
-			if err := yaml.Unmarshal(content, &slice); err == nil {
+			if err = yaml.Unmarshal(content, &slice); err == nil {
 				for _, item := range slice {
 					translations = append(translations, loadTranslationsFromYaml(item.Key.(string) /* locale */, item.Value, []string{})...)
 				}
+			} else {
+				panic(err)
 			}
+		} else {
+			panic(err)
 		}
 	}
 	return translations
