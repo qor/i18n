@@ -30,6 +30,18 @@
     init: function () {
       this.makeInputEditable();
       this.bind();
+      $.fn.editableform.template = '<form class="form-inline editableform">'+
+        '<div class="control-group">' +
+        '<div><label>Edit text</label><div class="editable-input"></div><div class="editable-buttons"></div></div>'+
+        '<div class="editable-error-block"></div>' +
+        '</div>' +
+        '</form>';
+
+      //loading div
+      $.fn.editableform.loading = '<div class="editableform-loading"></div>';
+
+      //buttons
+      $.fn.editableform.buttons = '<button type="button" class="editable-cancel">cancel</button><button type="submit" class="editable-submit">change</button>';
     },
 
     bind: function () {
