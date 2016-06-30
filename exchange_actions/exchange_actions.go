@@ -144,7 +144,7 @@ func RegisterExchangeJobs(I18n *i18n.I18n, Worker *worker.Worker) {
 										Locale: locales[idx],
 										Value:  value,
 									})
-									logMsg += fmt.Sprintf("%v/%v Imporeted %v,%v,%v\n", index, recordCount, locales[idx], values[0], value)
+									logMsg += fmt.Sprintf("%v/%v Imported %v,%v,%v\n", index, recordCount, locales[idx], values[0], value)
 								}
 							}
 							processedRecordLogs = append(processedRecordLogs, logMsg)
