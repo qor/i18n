@@ -16,16 +16,20 @@ import (
 	"github.com/qor/worker"
 )
 
+type ExportTranslationArgument struct {
+	Scope string
+}
+
+type ImportTranslationArgument struct {
+	TranslationsFile media_library.FileSystem
+}
+
 // RegisterExchangeJobs register i18n jobs into worker
 func RegisterExchangeJobs(I18n *i18n.I18n, Worker *worker.Worker) {
 	Worker.Admin.RegisterViewPath("github.com/qor/i18n/exchange_actions/views")
 
 	// Export Translations
-	type exportTranslationArgument struct {
-		Scope string
-	}
-
-	exportTranslationResource := Worker.Admin.NewResource(&exportTranslationArgument{})
+	exportTranslationResource := Worker.Admin.NewResource(&ExportTranslationArgument{})
 	exportTranslationResource.Meta(&admin.Meta{Name: "Scope", Type: "select_one", Collection: []string{"All", "Backend", "Frontend"}})
 
 	Worker.RegisterJob(&worker.Job{
@@ -40,7 +44,7 @@ func RegisterExchangeJobs(I18n *i18n.I18n, Worker *worker.Worker) {
 				filename         = fmt.Sprintf("/downloads/translations.%v.csv", time.Now().UnixNano())
 				fullFilename     = path.Join("public", filename)
 				i18nTranslations = I18n.LoadTranslations()
-				scope            = arg.(*exportTranslationArgument).Scope
+				scope            = arg.(*ExportTranslationArgument).Scope
 			)
 			qorJob.AddLog("Exporting translations...")
 
@@ -104,16 +108,13 @@ func RegisterExchangeJobs(I18n *i18n.I18n, Worker *worker.Worker) {
 	})
 
 	// Import Translations
-	type importTranslationArgument struct {
-		TranslationsFile media_library.FileSystem
-	}
 
 	Worker.RegisterJob(&worker.Job{
 		Name:     "Import Translations",
 		Group:    "Export/Import Translations From CSV file",
-		Resource: Worker.Admin.NewResource(&importTranslationArgument{}),
+		Resource: Worker.Admin.NewResource(&ImportTranslationArgument{}),
 		Handler: func(arg interface{}, qorJob worker.QorJobInterface) (err error) {
-			importTranslationArgument := arg.(*importTranslationArgument)
+			importTranslationArgument := arg.(*ImportTranslationArgument)
 			qorJob.AddLog("Importing translations...")
 			if csvfile, err := os.Open(path.Join("public", importTranslationArgument.TranslationsFile.URL())); err == nil {
 				reader := csv.NewReader(csvfile)
