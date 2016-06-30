@@ -9,6 +9,7 @@ import (
 	"github.com/qor/i18n"
 	"github.com/qor/i18n/backends/database"
 	"github.com/qor/i18n/exchange_actions"
+	"github.com/qor/media_library"
 	"github.com/qor/qor"
 	"github.com/qor/qor/test/utils"
 	"github.com/qor/worker"
@@ -25,7 +26,7 @@ func init() {
 	database.New(db)
 }
 
-func TestExportScopedTranslations(t *testing.T) {
+func TestExchange(t *testing.T) {
 	Admin := admin.New(&qor.Config{DB: db})
 	Worker := worker.New()
 	Admin.AddResource(Worker)
@@ -44,7 +45,17 @@ func TestExportScopedTranslations(t *testing.T) {
 				t.Errorf(color.RedString(fmt.Sprintf("\nExchange TestCase #%d: Failure (%s)\n", 1, "downloaded file should match file export_translations.csv")))
 			}
 		}
+		if job.Name == "Import Translations" {
+			job.Handler(&exchange_actions.ImportTranslationArgument{TranslationsFile: media_library.FileSystem{media_library.Base{Url: "imports/import_translations.csv"}}}, job.NewStruct().(worker.QorJobInterface))
+			zhMapping := map[string]string{"qor_admin.title": "标题", "qor_admin.subtitle": "小标题", "qor_admin.description": "描述", "header.title": "标题"}
+			for key, translation := range I18n.LoadTranslations()["zh-CN"] {
+				if zhMapping[key] != translation.Value {
+					t.Errorf(color.RedString(fmt.Sprintf("\nExchange TestCase #%d: Failure (%s)\n", 1, "zh translations not match")))
+				}
+			}
+		}
 	}
+
 }
 
 func clearDownloadDir() {
