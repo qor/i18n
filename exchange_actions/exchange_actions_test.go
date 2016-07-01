@@ -49,6 +49,8 @@ type testExportWithScopedCase struct {
 
 func TestExportTranslations(t *testing.T) {
 	reset()
+	I18n.SaveTranslation(&i18n.Translation{Key: "header.title", Value: "标题", Locale: "zh-CN"})
+
 	testCases := []*testExportWithScopedCase{
 		&testExportWithScopedCase{Scope: "", ExpectExportFile: "export_all.csv"},
 		&testExportWithScopedCase{Scope: "All", ExpectExportFile: "export_all.csv"},
@@ -62,7 +64,7 @@ func TestExportTranslations(t *testing.T) {
 			if job.Name == "Export Translations" {
 				job.Handler(&exchange_actions.ExportTranslationArgument{Scope: testcase.Scope}, job.NewStruct().(worker.QorJobInterface))
 				if downloadedFileContent() != loadFixture(testcase.ExpectExportFile) {
-					t.Errorf(color.RedString(fmt.Sprintf("\nExchange TestCase #%d: Failure (%s)\n", i+1, "downloaded file should match file export_translations.csv")))
+					t.Errorf(color.RedString(fmt.Sprintf("\nExchange TestCase #%d: Failure (%s)\n", i+1, "export results are incorrect")))
 				} else {
 					color.Green(fmt.Sprintf("Export with scope TestCase #%d: Success\n", i+1))
 				}
