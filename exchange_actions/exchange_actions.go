@@ -82,8 +82,16 @@ func RegisterExchangeJobs(I18n *i18n.I18n, Worker *worker.Worker) {
 			sort.Strings(translationKeys)
 
 			// Write CSV file
+			var (
+				recordCount         = len(translationKeys)
+				perCount            = recordCount/20 + 1
+				processedRecordLogs = []string{}
+				index               = 0
+				progressCount       = 0
+			)
 			for _, translationKey := range translationKeys {
 				// Filter out translation by scope
+				index++
 				if scope == "Backend" && !strings.HasPrefix(translationKey, "qor_") {
 					continue
 				}
@@ -99,6 +107,14 @@ func RegisterExchangeJobs(I18n *i18n.I18n, Worker *worker.Worker) {
 					translations = append(translations, value)
 				}
 				writer.Write(translations)
+				processedRecordLogs = append(processedRecordLogs, fmt.Sprintf("Exported %v\n", strings.Join(translations, ",")))
+				if index == perCount {
+					qorJob.AddLog(strings.Join(processedRecordLogs, ""))
+					processedRecordLogs = []string{}
+					progressCount++
+					qorJob.SetProgress(uint(float32(progressCount) / float32(20) * 100))
+					index = 0
+				}
 			}
 			writer.Flush()
 
@@ -149,7 +165,7 @@ func RegisterExchangeJobs(I18n *i18n.I18n, Worker *worker.Worker) {
 								}
 							}
 							processedRecordLogs = append(processedRecordLogs, logMsg)
-							if len(processedRecordLogs) < perCount {
+							if len(processedRecordLogs) == perCount {
 								qorJob.AddLog(strings.Join(processedRecordLogs, ""))
 								processedRecordLogs = []string{}
 								qorJob.SetProgress(uint(float32(index) / float32(recordCount+1) * 100))
