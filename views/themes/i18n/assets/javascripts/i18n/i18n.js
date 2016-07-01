@@ -104,6 +104,10 @@
         }
       }
 
+      if ($target.data().url) {
+        return;
+      }
+
       if (!$target.length) {
         return;
       }
