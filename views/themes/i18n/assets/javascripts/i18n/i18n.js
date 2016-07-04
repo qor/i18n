@@ -184,6 +184,10 @@
     },
 
     submit: function ($form, callback) {
+
+      window.onbeforeunload = null;
+      $.fn.qorSlideoutBeforeHide = null;
+
       if ($form.is('form')) {
         $.ajax(location.pathname, {
           method: 'POST',
