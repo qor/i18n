@@ -9,38 +9,42 @@ import (
 	"path/filepath"
 	"strings"
 
-	"gopkg.in/yaml.v2"
-
 	"github.com/qor/i18n"
+	"gopkg.in/yaml.v2"
 )
 
 // New new YAML backend for I18n
 func New(paths ...string) i18n.Backend {
 	backend := &Backend{}
 
+	var files []string
 	for _, p := range paths {
 		if file, err := os.Open(p); err == nil {
 			defer file.Close()
 			if fileInfo, err := file.Stat(); err == nil {
 				if fileInfo.IsDir() {
 					yamlFiles, _ := filepath.Glob(path.Join(p, "*.yaml"))
-					backend.files = append(backend.files, yamlFiles...)
+					files = append(files, yamlFiles...)
 
 					ymlFiles, _ := filepath.Glob(path.Join(p, "*.yml"))
-					backend.files = append(backend.files, ymlFiles...)
+					files = append(files, ymlFiles...)
 				} else if fileInfo.Mode().IsRegular() {
-					backend.files = append(backend.files, p)
+					files = append(files, p)
 				}
 			}
 		}
 	}
-
+	for _, file := range files {
+		if content, err := ioutil.ReadFile(file); err == nil {
+			backend.contents = append(backend.contents, content)
+		}
+	}
 	return backend
 }
 
 // Backend YAML backend
 type Backend struct {
-	files []string
+	contents [][]byte
 }
 
 func loadTranslationsFromYaml(locale string, value interface{}, scopes []string) (translations []*i18n.Translation) {
@@ -63,15 +67,11 @@ func loadTranslationsFromYaml(locale string, value interface{}, scopes []string)
 
 // LoadTranslations load translations from YAML backend
 func (backend *Backend) LoadTranslations() (translations []*i18n.Translation) {
-	for _, file := range backend.files {
-		if content, err := ioutil.ReadFile(file); err == nil {
-			var slice yaml.MapSlice
-			if err = yaml.Unmarshal(content, &slice); err == nil {
-				for _, item := range slice {
-					translations = append(translations, loadTranslationsFromYaml(item.Key.(string) /* locale */, item.Value, []string{})...)
-				}
-			} else {
-				panic(err)
+	for _, content := range backend.contents {
+		var slice yaml.MapSlice
+		if err := yaml.Unmarshal(content, &slice); err == nil {
+			for _, item := range slice {
+				translations = append(translations, loadTranslationsFromYaml(item.Key.(string) /* locale */, item.Value, []string{})...)
 			}
 		} else {
 			panic(err)
