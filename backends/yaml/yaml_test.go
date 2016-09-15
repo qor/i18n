@@ -2,6 +2,7 @@ package yaml_test
 
 import (
 	"fmt"
+	"net/http"
 	"testing"
 
 	"github.com/qor/i18n"
@@ -50,6 +51,13 @@ func TestLoadTranslations(t *testing.T) {
 	}
 }
 
+func TestLoadTranslationsFilesystem(t *testing.T) {
+	backend := yaml.NewWithFilesystem(http.Dir("./tests"))
+	if err := checkTranslations(backend.LoadTranslations()); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestLoadTranslationsWalk(t *testing.T) {
 	backend := yaml.NewWithWalk("tests")
 	if err := checkTranslations(backend.LoadTranslations()); err != nil {
@@ -83,4 +91,18 @@ func BenchmarkLoadTranslationsWalk(b *testing.B) {
 		}
 	}
 	benchmarkResult2 = err
+}
+
+var benchmarkResult3 error
+
+func BenchmarkLoadTranslationsFilesystem(b *testing.B) {
+	var backend i18n.Backend
+	var err error
+	for i := 0; i < b.N; i++ {
+		backend = yaml.NewWithFilesystem(http.Dir("./tests"))
+		if err = checkTranslations(backend.LoadTranslations()); err != nil {
+			b.Fatal(err)
+		}
+	}
+	benchmarkResult3 = err
 }

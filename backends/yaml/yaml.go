@@ -72,6 +72,53 @@ func isYamlFile(fileInfo os.FileInfo) bool {
 	return fileInfo.Mode().IsRegular() && (strings.HasSuffix(fileInfo.Name(), ".yml") || strings.HasSuffix(fileInfo.Name(), ".yaml"))
 }
 
+func walkFilesystem(fs http.FileSystem, entry http.File, prefix string) [][]byte {
+	var (
+		contents [][]byte
+		err      error
+		isRoot   bool
+	)
+	if entry == nil {
+		if entry, err = fs.Open("/"); err != nil {
+			return nil
+		}
+		isRoot = true
+		defer entry.Close()
+	}
+	fileInfo, err := entry.Stat()
+	if err != nil {
+		return nil
+	}
+	if !isRoot {
+		prefix = prefix + fileInfo.Name() + "/"
+	}
+	if fileInfo.IsDir() {
+		if entries, err := entry.Readdir(-1); err == nil {
+			for _, e := range entries {
+				if file, err := fs.Open(prefix + e.Name()); err == nil {
+					defer file.Close()
+					contents = append(contents, walkFilesystem(fs, file, prefix)...)
+				}
+			}
+		}
+	} else if isYamlFile(fileInfo) {
+		if content, err := ioutil.ReadAll(entry); err == nil {
+			contents = append(contents, content)
+		}
+	}
+	return contents
+}
+
+// NewWithFilesystem initializes a backend that reads translation files from an http.FileSystem.
+func NewWithFilesystem(fss ...http.FileSystem) i18n.Backend {
+	backend := &Backend{}
+
+	for _, fs := range fss {
+		backend.contents = append(backend.contents, walkFilesystem(fs, nil, "/")...)
+	}
+	return backend
+}
+
 // Backend YAML backend
 type Backend struct {
 	contents [][]byte
