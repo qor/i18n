@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"path"
 	"path/filepath"
@@ -40,6 +41,35 @@ func New(paths ...string) i18n.Backend {
 		}
 	}
 	return backend
+}
+
+// NewWithWalk has the same functionality as New but uses filepath.Walk to find all the translation files recursively.
+func NewWithWalk(paths ...string) i18n.Backend {
+	backend := &Backend{}
+
+	var files []string
+	for _, p := range paths {
+		filepath.Walk(p, func(path string, fileInfo os.FileInfo, err error) error {
+			if isYamlFile(fileInfo) {
+				files = append(files, path)
+			}
+			return nil
+		})
+	}
+	for _, file := range files {
+		if content, err := ioutil.ReadFile(file); err == nil {
+			backend.contents = append(backend.contents, content)
+		}
+	}
+
+	return backend
+}
+
+func isYamlFile(fileInfo os.FileInfo) bool {
+	if fileInfo == nil {
+		return false
+	}
+	return fileInfo.Mode().IsRegular() && (strings.HasSuffix(fileInfo.Name(), ".yml") || strings.HasSuffix(fileInfo.Name(), ".yaml"))
 }
 
 // Backend YAML backend

@@ -49,3 +49,38 @@ func TestLoadTranslations(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestLoadTranslationsWalk(t *testing.T) {
+	backend := yaml.NewWithWalk("tests")
+	if err := checkTranslations(backend.LoadTranslations()); err != nil {
+		t.Fatal(err)
+	}
+}
+
+var benchmarkResult error
+
+func BenchmarkLoadTranslations(b *testing.B) {
+	var backend i18n.Backend
+	var err error
+	for i := 0; i < b.N; i++ {
+		backend = yaml.New("tests", "tests/subdir")
+		if err = checkTranslations(backend.LoadTranslations()); err != nil {
+			b.Fatal(err)
+		}
+	}
+	benchmarkResult = err
+}
+
+var benchmarkResult2 error
+
+func BenchmarkLoadTranslationsWalk(b *testing.B) {
+	var backend i18n.Backend
+	var err error
+	for i := 0; i < b.N; i++ {
+		backend = yaml.NewWithWalk("tests")
+		if err = checkTranslations(backend.LoadTranslations()); err != nil {
+			b.Fatal(err)
+		}
+	}
+	benchmarkResult2 = err
+}
