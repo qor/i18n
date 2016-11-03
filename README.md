@@ -4,6 +4,10 @@ I18n provides internationalization support for your application, it supports dif
 
 [![GoDoc](https://godoc.org/github.com/qor/i18n?status.svg)](https://godoc.org/github.com/qor/i18n)
 
+## Documentation
+
+<https://doc.getqor.com/plugins/i18n.html>
+
 ## Usage
 
 ```go
