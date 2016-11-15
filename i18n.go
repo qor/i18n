@@ -127,13 +127,19 @@ func (i18n *I18n) Fallbacks(locale ...string) admin.I18n {
 // T translate with locale, key and arguments
 func (i18n *I18n) T(locale, key string, args ...interface{}) template.HTML {
 	var (
-		value          = i18n.value
-		translationKey = key
+		value           = i18n.value
+		translationKey  = key
+		fallbackLocales = i18n.fallbackLocales
 	)
 
 	if locale == "" {
 		locale = Default
 	}
+
+	if locales, ok := i18n.FallbackLocales[locale]; ok {
+		fallbackLocales = append(fallbackLocales, locales...)
+	}
+	fallbackLocales = append(fallbackLocales, Default)
 
 	if i18n.scope != "" {
 		translationKey = strings.Join([]string{i18n.scope, key}, ".")
@@ -141,18 +147,28 @@ func (i18n *I18n) T(locale, key string, args ...interface{}) template.HTML {
 
 	var translation Translation
 	if err := i18n.CacheStore.Unmarshal(cacheKey(locale, key), &translation); err != nil || translation.Value == "" {
-		// Get default translation if not translated
-		if err := i18n.CacheStore.Unmarshal(cacheKey(Default, key), &translation); err != nil || translation.Value == "" {
-			// If not initialized
-			translation = Translation{Key: translationKey, Value: value, Locale: locale, Backend: i18n.Backends[0]}
+		for _, fallbackLocale := range fallbackLocales {
+			if err := i18n.CacheStore.Unmarshal(cacheKey(fallbackLocale, key), &translation); err == nil && translation.Value != "" {
+				break
+			}
+		}
 
-			// Save translation
-			i18n.SaveTranslation(&translation)
+		if translation.Value == "" {
+			// Get default translation if not translated
+			if err := i18n.CacheStore.Unmarshal(cacheKey(Default, key), &translation); err != nil || translation.Value == "" {
+				// If not initialized
+				translation = Translation{Key: translationKey, Value: value, Locale: locale, Backend: i18n.Backends[0]}
+
+				// Save translation
+				i18n.SaveTranslation(&translation)
+			}
 		}
 	}
 
 	if translation.Value != "" {
 		value = translation.Value
+	} else {
+		value = key
 	}
 
 	if str, err := cldr.Parse(locale, value, args...); err == nil {
