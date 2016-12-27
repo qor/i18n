@@ -47,14 +47,14 @@ func loadTranslationsFromYaml(locale string, value interface{}, scopes []string)
 	switch v := value.(type) {
 	case yaml.MapSlice:
 		for _, s := range v {
-			results := loadTranslationsFromYaml(locale, s.Value, append(scopes, fmt.Sprintf("%v", s.Key)))
+			results := loadTranslationsFromYaml(locale, s.Value, append(scopes, fmt.Sprint(s.Key)))
 			translations = append(translations, results...)
 		}
 	default:
 		var translation = &i18n.Translation{
 			Locale: locale,
 			Key:    strings.Join(scopes, "."),
-			Value:  fmt.Sprintf("%v", v),
+			Value:  fmt.Sprint(v),
 		}
 		translations = append(translations, translation)
 	}

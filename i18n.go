@@ -32,7 +32,7 @@ type I18n struct {
 	Backends        []Backend
 	FallbackLocales map[string][]string
 	fallbackLocales []string
-	CacheStore      cache.CacheStoreInterface
+	cacheStore      cache.CacheStoreInterface
 }
 
 // ResourceName change display name in qor admin
@@ -57,14 +57,25 @@ type Translation struct {
 
 // New initialize I18n with backends
 func New(backends ...Backend) *I18n {
-	i18n := &I18n{Backends: backends, CacheStore: memory.New()}
+	i18n := &I18n{Backends: backends, cacheStore: memory.New()}
+	i18n.loadToCacheStore()
+	return i18n
+}
+
+// SetCacheStore set i18n's cache store
+func (i18n *I18n) SetCacheStore(cacheStore cache.CacheStoreInterface) {
+	i18n.cacheStore = cacheStore
+	i18n.loadToCacheStore()
+}
+
+func (i18n *I18n) loadToCacheStore() {
+	backends := i18n.Backends
 	for i := len(backends) - 1; i >= 0; i-- {
 		var backend = backends[i]
 		for _, translation := range backend.LoadTranslations() {
 			i18n.AddTranslation(translation)
 		}
 	}
-	return i18n
 }
 
 // LoadTranslations load translations as map `map[locale]map[key]*Translation`
@@ -85,7 +96,7 @@ func (i18n *I18n) LoadTranslations() map[string]map[string]*Translation {
 
 // AddTranslation add translation
 func (i18n *I18n) AddTranslation(translation *Translation) error {
-	return i18n.CacheStore.Set(cacheKey(translation.Locale, translation.Key), translation)
+	return i18n.cacheStore.Set(cacheKey(translation.Locale, translation.Key), translation)
 }
 
 // SaveTranslation save translation
@@ -106,22 +117,22 @@ func (i18n *I18n) DeleteTranslation(translation *Translation) (err error) {
 		backend.DeleteTranslation(translation)
 	}
 
-	return i18n.CacheStore.Delete(cacheKey(translation.Locale, translation.Key))
+	return i18n.cacheStore.Delete(cacheKey(translation.Locale, translation.Key))
 }
 
 // Scope i18n scope
 func (i18n *I18n) Scope(scope string) admin.I18n {
-	return &I18n{CacheStore: i18n.CacheStore, scope: scope, value: i18n.value, Backends: i18n.Backends, Resource: i18n.Resource, FallbackLocales: i18n.FallbackLocales, fallbackLocales: i18n.fallbackLocales}
+	return &I18n{cacheStore: i18n.cacheStore, scope: scope, value: i18n.value, Backends: i18n.Backends, Resource: i18n.Resource, FallbackLocales: i18n.FallbackLocales, fallbackLocales: i18n.fallbackLocales}
 }
 
 // Default default value of translation if key is missing
 func (i18n *I18n) Default(value string) admin.I18n {
-	return &I18n{CacheStore: i18n.CacheStore, scope: i18n.scope, value: value, Backends: i18n.Backends, Resource: i18n.Resource, FallbackLocales: i18n.FallbackLocales, fallbackLocales: i18n.fallbackLocales}
+	return &I18n{cacheStore: i18n.cacheStore, scope: i18n.scope, value: value, Backends: i18n.Backends, Resource: i18n.Resource, FallbackLocales: i18n.FallbackLocales, fallbackLocales: i18n.fallbackLocales}
 }
 
 //  default value of translation if key is missing
 func (i18n *I18n) Fallbacks(locale ...string) admin.I18n {
-	return &I18n{CacheStore: i18n.CacheStore, scope: i18n.scope, value: i18n.value, Backends: i18n.Backends, Resource: i18n.Resource, FallbackLocales: i18n.FallbackLocales, fallbackLocales: locale}
+	return &I18n{cacheStore: i18n.cacheStore, scope: i18n.scope, value: i18n.value, Backends: i18n.Backends, Resource: i18n.Resource, FallbackLocales: i18n.FallbackLocales, fallbackLocales: locale}
 }
 
 // T translate with locale, key and arguments
@@ -146,16 +157,16 @@ func (i18n *I18n) T(locale, key string, args ...interface{}) template.HTML {
 	}
 
 	var translation Translation
-	if err := i18n.CacheStore.Unmarshal(cacheKey(locale, key), &translation); err != nil || translation.Value == "" {
+	if err := i18n.cacheStore.Unmarshal(cacheKey(locale, key), &translation); err != nil || translation.Value == "" {
 		for _, fallbackLocale := range fallbackLocales {
-			if err := i18n.CacheStore.Unmarshal(cacheKey(fallbackLocale, key), &translation); err == nil && translation.Value != "" {
+			if err := i18n.cacheStore.Unmarshal(cacheKey(fallbackLocale, key), &translation); err == nil && translation.Value != "" {
 				break
 			}
 		}
 
 		if translation.Value == "" {
 			// Get default translation if not translated
-			if err := i18n.CacheStore.Unmarshal(cacheKey(Default, key), &translation); err != nil || translation.Value == "" {
+			if err := i18n.cacheStore.Unmarshal(cacheKey(Default, key), &translation); err != nil || translation.Value == "" {
 				// If not initialized
 				translation = Translation{Key: translationKey, Value: value, Locale: locale, Backend: i18n.Backends[0]}
 
