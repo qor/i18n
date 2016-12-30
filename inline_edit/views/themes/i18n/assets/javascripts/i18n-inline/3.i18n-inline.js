@@ -30,6 +30,11 @@
     init: function () {
       this.makeInputEditable();
       this.bind();
+
+      this.$element.find("*").on(EVENT_CLICK, function() {
+        return true;
+      });
+
       $.fn.editableform.template = '<form class="form-inline editableform">'+
         '<div class="control-group">' +
         '<div><label>Edit text</label><div class="editable-input"></div><div class="editable-buttons"></div></div>'+
