@@ -2,6 +2,10 @@ package exchange_actions_test
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
+	"testing"
+
 	"github.com/fatih/color"
 	"github.com/jinzhu/gorm"
 	_ "github.com/mattn/go-sqlite3"
@@ -9,13 +13,11 @@ import (
 	"github.com/qor/i18n"
 	"github.com/qor/i18n/backends/database"
 	"github.com/qor/i18n/exchange_actions"
-	"github.com/qor/media_library"
+	"github.com/qor/media"
+	"github.com/qor/media/oss"
 	"github.com/qor/qor"
 	"github.com/qor/qor/test/utils"
 	"github.com/qor/worker"
-	"io/ioutil"
-	"os"
-	"testing"
 )
 
 var db *gorm.DB
@@ -103,7 +105,7 @@ func TestImportTranslations(t *testing.T) {
 	for i, testCase := range testCases {
 		for _, job := range Worker.Jobs {
 			if job.Name == "Import Translations" {
-				job.Handler(&exchange_actions.ImportTranslationArgument{TranslationsFile: media_library.FileSystem{media_library.Base{Url: "imports/" + testCase.ImportFile}}}, job.NewStruct().(worker.QorJobInterface))
+				job.Handler(&exchange_actions.ImportTranslationArgument{TranslationsFile: oss.OSS{media.Base{Url: "imports/" + testCase.ImportFile}}}, job.NewStruct().(worker.QorJobInterface))
 				translations := I18n.LoadTranslations()["zh-CN"]
 				if len(translations) == 0 {
 					t.Errorf(color.RedString(fmt.Sprintf("\nImport TestCase #%d: Failure (%s)\n", i+1, "Doesn't have Zh translations")))
