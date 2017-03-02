@@ -350,7 +350,7 @@ func (i18n *I18n) ConfigureQorResource(res resource.Resourcer) {
 
 			pagination := context.Searcher.Pagination
 			pagination.Total = len(keys)
-			pagination.PerPage = 25
+			pagination.PerPage, _ = strconv.Atoi(context.Request.URL.Query().Get("per_page"))
 			pagination.CurrentPage, _ = strconv.Atoi(context.Request.URL.Query().Get("page"))
 			if pagination.CurrentPage == 0 {
 				pagination.CurrentPage = 1
