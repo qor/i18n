@@ -352,12 +352,19 @@ func (i18n *I18n) ConfigureQorResource(res resource.Resourcer) {
 			pagination.Total = len(keys)
 			pagination.PerPage, _ = strconv.Atoi(context.Request.URL.Query().Get("per_page"))
 			pagination.CurrentPage, _ = strconv.Atoi(context.Request.URL.Query().Get("page"))
+
 			if pagination.CurrentPage == 0 {
 				pagination.CurrentPage = 1
 			}
+
+			if pagination.PerPage == 0 {
+				pagination.PerPage = 25
+			}
+
 			if pagination.CurrentPage > 0 {
 				pagination.Pages = pagination.Total / pagination.PerPage
 			}
+
 			context.Searcher.Pagination = pagination
 
 			var paginationKeys []string
