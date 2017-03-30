@@ -402,9 +402,9 @@ func (i18n *I18n) ConfigureQorResource(res resource.Resourcer) {
 
 		controller := i18nController{i18n}
 		router := res.GetAdmin().GetRouter()
-		router.Get(res.ToParam(), controller.Index)
-		router.Post(res.ToParam(), controller.Update)
-		router.Put(res.ToParam(), controller.Update)
+		router.Get(res.ToParam(), controller.Index, &admin.RouteConfig{Resource: res})
+		router.Post(res.ToParam(), controller.Update, &admin.RouteConfig{Resource: res})
+		router.Put(res.ToParam(), controller.Update, &admin.RouteConfig{Resource: res})
 
 		res.GetAdmin().RegisterViewPath("github.com/qor/i18n/views")
 	}
