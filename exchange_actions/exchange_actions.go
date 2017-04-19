@@ -6,6 +6,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"runtime/debug"
 	"sort"
 	"strings"
 	"time"
@@ -26,10 +27,17 @@ type ImportTranslationArgument struct {
 
 // RegisterExchangeJobs register i18n jobs into worker
 func RegisterExchangeJobs(I18n *i18n.I18n, Worker *worker.Worker) {
-	Worker.Admin.RegisterViewPath("github.com/qor/i18n/exchange_actions/views")
+	if I18n.Resource == nil {
+		debug.PrintStack()
+		fmt.Println("I18n should be registered into `Admin` before register jobs")
+		return
+	}
+
+	Admin := I18n.Resource.GetAdmin()
+	Admin.RegisterViewPath("github.com/qor/i18n/exchange_actions/views")
 
 	// Export Translations
-	exportTranslationResource := Worker.Admin.NewResource(&ExportTranslationArgument{})
+	exportTranslationResource := Admin.NewResource(&ExportTranslationArgument{})
 	exportTranslationResource.Meta(&admin.Meta{Name: "Scope", Type: "select_one", Collection: []string{"All", "Backend", "Frontend"}})
 
 	Worker.RegisterJob(&worker.Job{
@@ -128,7 +136,7 @@ func RegisterExchangeJobs(I18n *i18n.I18n, Worker *worker.Worker) {
 	Worker.RegisterJob(&worker.Job{
 		Name:     "Import Translations",
 		Group:    "Export/Import Translations From CSV file",
-		Resource: Worker.Admin.NewResource(&ImportTranslationArgument{}),
+		Resource: Admin.NewResource(&ImportTranslationArgument{}),
 		Handler: func(arg interface{}, qorJob worker.QorJobInterface) (err error) {
 			importTranslationArgument := arg.(*ImportTranslationArgument)
 			qorJob.AddLog("Importing translations...")
