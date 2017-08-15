@@ -168,7 +168,11 @@ func (i18n *I18n) T(locale, key string, args ...interface{}) template.HTML {
 			// Get default translation if not translated
 			if err := i18n.cacheStore.Unmarshal(cacheKey(Default, key), &translation); err != nil || translation.Value == "" {
 				// If not initialized
-				translation = Translation{Key: translationKey, Value: value, Locale: locale, Backend: i18n.Backends[0]}
+				var defaultBackend Backend
+				if len(i18n.Backends) > 0 {
+					defaultBackend = i18n.Backends[0]
+				}
+				translation = Translation{Key: translationKey, Value: value, Locale: locale, Backend: defaultBackend}
 
 				// Save translation
 				i18n.SaveTranslation(&translation)
