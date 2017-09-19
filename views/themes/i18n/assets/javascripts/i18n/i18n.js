@@ -69,14 +69,12 @@
 
         bind: function() {
             this.$element.on(EVENT_CLICK, $.proxy(this.click, this)).on(EVENT_CHANGE, $.proxy(this.change, this));
-
             this.$languages.on(EVENT_CHANGE, $.proxy(this.reload, this));
         },
 
         unbind: function() {
-            this.$element.off(EVENT_CLICK, this.click).off(EVENT_CHANGE, this.change);
-
-            this.$languages.off(EVENT_CHANGE, this.reload);
+            this.$element.off(EVENT_CLICK).off(EVENT_CHANGE);
+            this.$languages.off(EVENT_CHANGE);
         },
 
         click: function(e) {
@@ -99,11 +97,7 @@
                 }
             }
 
-            if ($target.data().url) {
-                return;
-            }
-
-            if (!$target.length) {
+            if (($target.data() && $target.data().url) || !$target.length) {
                 return;
             }
 
