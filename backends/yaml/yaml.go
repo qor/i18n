@@ -14,8 +14,10 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+var _ i18n.Backend = &Backend{}
+
 // New new YAML backend for I18n
-func New(paths ...string) i18n.Backend {
+func New(paths ...string) *Backend {
 	backend := &Backend{}
 
 	var files []string
