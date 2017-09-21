@@ -142,14 +142,24 @@ func loadTranslationsFromYaml(locale string, value interface{}, scopes []string)
 	return
 }
 
+// LoadYAMLContent load YAML content
+func (backend *Backend) LoadYAMLContent(content []byte) (translations []*i18n.Translation, err error) {
+	var slice yaml.MapSlice
+
+	if err = yaml.Unmarshal(content, &slice); err == nil {
+		for _, item := range slice {
+			translations = append(translations, loadTranslationsFromYaml(item.Key.(string) /* locale */, item.Value, []string{})...)
+		}
+	}
+
+	return translations, err
+}
+
 // LoadTranslations load translations from YAML backend
 func (backend *Backend) LoadTranslations() (translations []*i18n.Translation) {
 	for _, content := range backend.contents {
-		var slice yaml.MapSlice
-		if err := yaml.Unmarshal(content, &slice); err == nil {
-			for _, item := range slice {
-				translations = append(translations, loadTranslationsFromYaml(item.Key.(string) /* locale */, item.Value, []string{})...)
-			}
+		if results, err := backend.LoadYAMLContent(content); err == nil {
+			translations = append(translations, results...)
 		} else {
 			panic(err)
 		}
