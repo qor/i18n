@@ -4,7 +4,6 @@ import (
 	"encoding/csv"
 	"fmt"
 	"os"
-	"path"
 	"path/filepath"
 	"runtime/debug"
 	"sort"
@@ -50,7 +49,7 @@ func RegisterExchangeJobs(I18n *i18n.I18n, Worker *worker.Worker) {
 				translationKeys  []string
 				translationsMap  = map[string]bool{}
 				filename         = fmt.Sprintf("/downloads/translations.%v.csv", time.Now().UnixNano())
-				fullFilename     = path.Join("public", filename)
+				fullFilename     = filepath.Join("public", filename)
 				i18nTranslations = I18n.LoadTranslations()
 				scope            = arg.(*ExportTranslationArgument).Scope
 			)
@@ -140,7 +139,7 @@ func RegisterExchangeJobs(I18n *i18n.I18n, Worker *worker.Worker) {
 		Handler: func(arg interface{}, qorJob worker.QorJobInterface) (err error) {
 			importTranslationArgument := arg.(*ImportTranslationArgument)
 			qorJob.AddLog("Importing translations...")
-			if csvfile, err := os.Open(path.Join("public", importTranslationArgument.TranslationsFile.URL())); err == nil {
+			if csvfile, err := os.Open(filepath.Join("public", importTranslationArgument.TranslationsFile.URL())); err == nil {
 				reader := csv.NewReader(csvfile)
 				reader.TrimLeadingSpace = true
 				if records, err := reader.ReadAll(); err == nil {

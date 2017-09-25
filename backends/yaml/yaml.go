@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 
@@ -26,10 +25,10 @@ func New(paths ...string) *Backend {
 			defer file.Close()
 			if fileInfo, err := file.Stat(); err == nil {
 				if fileInfo.IsDir() {
-					yamlFiles, _ := filepath.Glob(path.Join(p, "*.yaml"))
+					yamlFiles, _ := filepath.Glob(filepath.Join(p, "*.yaml"))
 					files = append(files, yamlFiles...)
 
-					ymlFiles, _ := filepath.Glob(path.Join(p, "*.yml"))
+					ymlFiles, _ := filepath.Glob(filepath.Join(p, "*.yml"))
 					files = append(files, ymlFiles...)
 				} else if fileInfo.Mode().IsRegular() {
 					files = append(files, p)
