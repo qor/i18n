@@ -280,7 +280,7 @@ func (i18n *I18n) ConfigureQorResource(res resource.Resourcer) {
 	if res, ok := res.(*admin.Resource); ok {
 		i18n.Resource = res
 		res.UseTheme("i18n")
-		res.GetAdmin().I18n = i18n
+		res.GetAdmin().Config.I18n = i18n
 		res.SearchAttrs("value") // generate search handler for i18n
 
 		var getPrimaryLocale = func(context *admin.Context) string {
