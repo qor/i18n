@@ -130,7 +130,7 @@ func (i18n *I18n) Default(value string) admin.I18n {
 	return &I18n{cacheStore: i18n.cacheStore, scope: i18n.scope, value: value, Backends: i18n.Backends, Resource: i18n.Resource, FallbackLocales: i18n.FallbackLocales, fallbackLocales: i18n.fallbackLocales}
 }
 
-//  default value of translation if key is missing
+// Fallbacks fallback to locale if translation doesn't exist in specified locale
 func (i18n *I18n) Fallbacks(locale ...string) admin.I18n {
 	return &I18n{cacheStore: i18n.cacheStore, scope: i18n.scope, value: i18n.value, Backends: i18n.Backends, Resource: i18n.Resource, FallbackLocales: i18n.FallbackLocales, fallbackLocales: locale}
 }
