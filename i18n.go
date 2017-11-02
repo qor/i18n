@@ -6,7 +6,6 @@ import (
 	"html/template"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"path/filepath"
 	"sort"
 	"strconv"
@@ -196,7 +195,7 @@ func (i18n *I18n) T(locale, key string, args ...interface{}) template.HTML {
 // RenderInlineEditAssets render inline edit html, it is using: http://vitalets.github.io/x-editable/index.html
 // You could use Bootstrap or JQuery UI by set isIncludeExtendAssetLib to false and load files by yourself
 func RenderInlineEditAssets(isIncludeJQuery bool, isIncludeExtendAssetLib bool) (template.HTML, error) {
-	for _, gopath := range strings.Split(os.Getenv("GOPATH"), ":") {
+	for _, gopath := range utils.GOPATH() {
 		var content string
 		var hasError bool
 
