@@ -322,6 +322,7 @@ func (i18n *I18n) ConfigureQorResource(res resource.Resourcer) {
 					for key, translation := range translations {
 						if (keyword == "") || (strings.Index(strings.ToLower(translation.Key), keyword) != -1 ||
 							strings.Index(strings.ToLower(translation.Value), keyword) != -1) {
+
 							if _, ok := matchedTranslations[key]; !ok {
 								var t = matchedTranslation{
 									Key:           key,
@@ -333,6 +334,12 @@ func (i18n *I18n) ConfigureQorResource(res resource.Resourcer) {
 								if localeTranslations, ok := translationsMap[primaryLocale]; ok {
 									if v, ok := localeTranslations[key]; ok {
 										t.PrimaryValue = v.Value
+									}
+								}
+
+								if localeTranslations, ok := translationsMap[editingLocale]; ok {
+									if v, ok := localeTranslations[key]; ok {
+										t.EditingValue = v.Value
 									}
 								}
 
@@ -365,7 +372,7 @@ func (i18n *I18n) ConfigureQorResource(res resource.Resourcer) {
 			}
 
 			if pagination.CurrentPage > 0 {
-				pagination.Pages = pagination.Total / pagination.PerPage
+				pagination.Pages = pagination.Total/pagination.PerPage + 1
 			}
 
 			context.Searcher.Pagination = pagination
