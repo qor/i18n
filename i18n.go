@@ -179,11 +179,13 @@ func (i18n *I18n) T(locale, key string, args ...interface{}) template.HTML {
 		}
 	}
 
-	if translation.Value != "" {
-		value = translation.Value
-	} else {
-		value = key
-	}
+	value = translation.Value //values is a value, even if it is empty
+
+	// if translation.Value != "" {
+	// 	value = translation.Value
+	// } else {
+	// 	value = key
+	// }
 
 	if str, err := cldr.Parse(locale, value, args...); err == nil {
 		value = str
