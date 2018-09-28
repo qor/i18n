@@ -154,9 +154,6 @@ func (i18n *I18n) T(locale, key string, args ...interface{}) template.HTML {
 		}
 	}
 
-	if locales, ok := i18n.FallbackLocales[locale]; ok {
-		fallbackLocales = append(fallbackLocales, locales...)
-	}
 	fallbackLocales = append(fallbackLocales, Default)
 
 	if i18n.scope != "" {
