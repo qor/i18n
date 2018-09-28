@@ -144,6 +144,14 @@ func (i18n *I18n) T(locale, key string, args ...interface{}) template.HTML {
 
 	if locale == "" {
 		locale = Default
+	} else {
+		for fallbackLocale, locales := range i18n.FallbackLocales {
+			for _, value := range locales {
+				if value == locale {
+					fallbackLocales = append(fallbackLocales, fallbackLocale)
+				}
+			}
+		}
 	}
 
 	if locales, ok := i18n.FallbackLocales[locale]; ok {
