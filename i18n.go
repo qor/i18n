@@ -149,6 +149,7 @@ func (i18n *I18n) T(locale, key string, args ...interface{}) template.HTML {
 			for _, value := range locales {
 				if value == locale {
 					fallbackLocales = append(fallbackLocales, fallbackLocale)
+					break
 				}
 			}
 		}
