@@ -10,7 +10,7 @@ import (
 // Translation is a struct used to save translations into databae
 type Translation struct {
 	Locale string `sql:"size:12;"`
-	Key    string `sql:"size:4294967295;"`
+	Key    string `sql:"size:256;"`
 	Value  string `sql:"size:4294967295"`
 }
 
