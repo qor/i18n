@@ -26,6 +26,8 @@ func main() {
 
   I18n.T("en-US", "demo.greeting") // Not exist at first
   I18n.T("en-US", "demo.hello") // Exists in the yml file
+
+  i18n.Default = "zh-CN" // change the default locale. the original value is "en-US"
 }
 ```
 
@@ -51,7 +53,16 @@ I18n has a built-in web interface for translations which is integrated with [QOR
 Admin.AddResource(I18n)
 ```
 
-Then a page like this will be added to [QOR Admin](http://github.com/qor/admin) interface
+To let users able to translate between locales in the admin interface, your "User" need to implement these interfaces.
+```go
+func (user User) EditableLocales() []string {
+	return []string{"en-US", "zh-CN"}
+}
+
+func (user User) ViewableLocales() []string {
+	return []string{"en-US", "zh-CN"}
+}
+```
 
 Refer the [online demo](http://demo.getqor.com/admin/translations).
 
@@ -162,6 +173,8 @@ inline_edit.FuncMap(I18n, "en-US", true) // => map[string]interface{}{
                                          //      },
                                          //    }
 ```
+
+
 
 ## License
 
