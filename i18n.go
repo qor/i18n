@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"html/template"
 	"io/ioutil"
-	"net/http"
 	"path/filepath"
 	"sort"
 	"strconv"
@@ -32,6 +31,8 @@ type I18n struct {
 	FallbackLocales map[string][]string
 	fallbackLocales []string
 	cacheStore      cache.CacheStoreInterface
+
+	locales []string
 }
 
 // ResourceName change display name in qor admin
@@ -59,6 +60,9 @@ type Translation struct {
 func New(backends ...Backend) *I18n {
 	i18n := &I18n{Backends: backends, cacheStore: memory.New()}
 	i18n.loadToCacheStore()
+	for locale := range i18n.FallbackLocales {
+		i18n.locales = append(i18n.locales, locale)
+	}
 	return i18n
 }
 
@@ -183,11 +187,13 @@ func (i18n *I18n) T(locale, key string, args ...interface{}) template.HTML {
 		}
 	}
 
-	if translation.Value != "" {
-		value = translation.Value
-	} else {
-		value = key
-	}
+	value = translation.Value //values is a value, even if it is empty
+
+	// if translation.Value != "" {
+	// 	value = translation.Value
+	// } else {
+	// 	value = key
+	// }
 
 	if str, err := cldr.Parse(locale, value, args...); err == nil {
 		value = str
@@ -244,38 +250,46 @@ func getLocaleFromContext(context *qor.Context) string {
 	return Default
 }
 
-type availableLocalesInterface interface {
-	AvailableLocales() []string
+// type availableLocalesInterface interface {
+// 	AvailableLocales() []string
+// }
+
+// type viewableLocalesInterface interface {
+// 	ViewableLocales() []string
+// }
+
+// type editableLocalesInterface interface {
+// 	EditableLocales() []string
+// }
+
+// func getAvailableLocales(req *http.Request, currentUser qor.CurrentUser) []string {
+// 	if user, ok := currentUser.(viewableLocalesInterface); ok {
+// 		return user.ViewableLocales()
+// 	}
+
+// 	if user, ok := currentUser.(availableLocalesInterface); ok {
+// 		return user.AvailableLocales()
+// 	}
+// 	return []string{Default}
+// }
+
+// func getEditableLocales(req *http.Request, currentUser qor.CurrentUser) []string {
+// 	if user, ok := currentUser.(editableLocalesInterface); ok {
+// 		return user.EditableLocales()
+// 	}
+
+// 	if user, ok := currentUser.(availableLocalesInterface); ok {
+// 		return user.AvailableLocales()
+// 	}
+// 	return []string{Default}
+// }
+
+func (i18n *I18n) Locales() []string {
+	return i18n.locales
 }
 
-type viewableLocalesInterface interface {
-	ViewableLocales() []string
-}
-
-type editableLocalesInterface interface {
-	EditableLocales() []string
-}
-
-func getAvailableLocales(req *http.Request, currentUser qor.CurrentUser) []string {
-	if user, ok := currentUser.(viewableLocalesInterface); ok {
-		return user.ViewableLocales()
-	}
-
-	if user, ok := currentUser.(availableLocalesInterface); ok {
-		return user.AvailableLocales()
-	}
-	return []string{Default}
-}
-
-func getEditableLocales(req *http.Request, currentUser qor.CurrentUser) []string {
-	if user, ok := currentUser.(editableLocalesInterface); ok {
-		return user.EditableLocales()
-	}
-
-	if user, ok := currentUser.(availableLocalesInterface); ok {
-		return user.AvailableLocales()
-	}
-	return []string{Default}
+func (i18n *I18n) SetLocales(locales []string) {
+	i18n.locales = locales
 }
 
 // ConfigureQorResource configure qor resource for qor admin
@@ -290,8 +304,8 @@ func (i18n *I18n) ConfigureQorResource(res resource.Resourcer) {
 			if locale := context.Request.Form.Get("primary_locale"); locale != "" {
 				return locale
 			}
-			if availableLocales := getAvailableLocales(context.Request, context.CurrentUser); len(availableLocales) > 0 {
-				return availableLocales[0]
+			if len(i18n.locales) > 0 {
+				return i18n.locales[0]
 			}
 			return ""
 		}
@@ -326,6 +340,7 @@ func (i18n *I18n) ConfigureQorResource(res resource.Resourcer) {
 					for key, translation := range translations {
 						if (keyword == "") || (strings.Index(strings.ToLower(translation.Key), keyword) != -1 ||
 							strings.Index(strings.ToLower(translation.Value), keyword) != -1) {
+
 							if _, ok := matchedTranslations[key]; !ok {
 								var t = matchedTranslation{
 									Key:           key,
@@ -337,6 +352,12 @@ func (i18n *I18n) ConfigureQorResource(res resource.Resourcer) {
 								if localeTranslations, ok := translationsMap[primaryLocale]; ok {
 									if v, ok := localeTranslations[key]; ok {
 										t.PrimaryValue = v.Value
+									}
+								}
+
+								if localeTranslations, ok := translationsMap[editingLocale]; ok {
+									if v, ok := localeTranslations[key]; ok {
+										t.EditingValue = v.Value
 									}
 								}
 
@@ -369,7 +390,7 @@ func (i18n *I18n) ConfigureQorResource(res resource.Resourcer) {
 			}
 
 			if pagination.CurrentPage > 0 {
-				pagination.Pages = pagination.Total / pagination.PerPage
+				pagination.Pages = pagination.Total/pagination.PerPage + 1
 			}
 
 			context.Searcher.Pagination = pagination
@@ -400,11 +421,11 @@ func (i18n *I18n) ConfigureQorResource(res resource.Resourcer) {
 		res.GetAdmin().RegisterFuncMap("i18n_editing_locale", getEditingLocale)
 
 		res.GetAdmin().RegisterFuncMap("i18n_viewable_locales", func(context admin.Context) []string {
-			return getAvailableLocales(context.Request, context.CurrentUser)
+			return i18n.locales
 		})
 
 		res.GetAdmin().RegisterFuncMap("i18n_editable_locales", func(context admin.Context) []string {
-			return getEditableLocales(context.Request, context.CurrentUser)
+			return i18n.locales
 		})
 
 		controller := i18nController{i18n}
