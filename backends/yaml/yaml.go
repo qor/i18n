@@ -173,6 +173,11 @@ func (backend *Backend) SaveTranslation(t *i18n.Translation) error {
 	return errors.New("not implemented")
 }
 
+// FindTranslation find translation from  backend
+func (backend *Backend) FindTranslation(t *i18n.Translation) (translation i18n.Translation) {
+	return translation //not implemented
+}
+
 // DeleteTranslation delete translation into YAML backend, not implemented
 func (backend *Backend) DeleteTranslation(t *i18n.Translation) error {
 	return errors.New("not implemented")

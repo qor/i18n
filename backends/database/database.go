@@ -41,6 +41,12 @@ func (backend *Backend) SaveTranslation(t *i18n.Translation) error {
 		FirstOrCreate(&Translation{}).Error
 }
 
+// FindTranslation find translation from DB backend
+func (backend *Backend) FindTranslation(t *i18n.Translation) (translation i18n.Translation) {
+	backend.DB.Where(Translation{Key: t.Key, Locale: t.Locale}).Find(&translation)
+	return translation
+}
+
 // DeleteTranslation delete translation into DB backend
 func (backend *Backend) DeleteTranslation(t *i18n.Translation) error {
 	return backend.DB.Where(Translation{Key: t.Key, Locale: t.Locale}).Delete(&Translation{}).Error
