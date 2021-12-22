@@ -43,6 +43,7 @@ func (I18n) ResourceName() string {
 type Backend interface {
 	LoadTranslations() []*Translation
 	SaveTranslation(*Translation) error
+	FindTranslation(*Translation) Translation
 	DeleteTranslation(*Translation) error
 }
 
@@ -171,10 +172,13 @@ func (i18n *I18n) T(locale, key string, args ...interface{}) template.HTML {
 				if len(i18n.Backends) > 0 {
 					defaultBackend = i18n.Backends[0]
 				}
-				translation = Translation{Key: translationKey, Value: value, Locale: locale, Backend: defaultBackend}
 
-				// Save translation
-				i18n.SaveTranslation(&translation)
+				translation = Translation{Key: translationKey, Value: value, Locale: locale, Backend: defaultBackend}
+				if t := defaultBackend.FindTranslation(&translation); t.Value != "" {
+					translation = t
+				} else {
+					i18n.SaveTranslation(&translation)
+				}
 			}
 		}
 	}
