@@ -339,6 +339,12 @@ func (i18n *I18n) ConfigureQorResource(res resource.Resourcer) {
 										t.PrimaryValue = v.Value
 									}
 								}
+								
+								if localeTranslations, ok := translationsMap[editingLocale]; ok {
+									if v, ok := localeTranslations[key]; ok {
+										t.EditingValue = v.Value
+									}
+								}
 
 								matchedTranslations[key] = t
 								keys = append(keys, key)
